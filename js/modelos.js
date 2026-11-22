@@ -99,7 +99,7 @@ const CONTRATACAO = {
   chave: 'contratacao', nome: 'Contratação', dias: 3,
   entrega: 'Contrato assinado, prazos definidos e entrada recebida.',
   grupos: {
-    'Cadastro e contrato': 'Cadastrar cliente e responsáveis pelas decisões|Aprovar proposta / orçamento|Receber o contrato assinado|Definir prazos de cada fase|Programar os pagamentos (entrada, 3D, entrega final)|Receber pagamento da entrada',
+    'Cadastro e contrato': 'Cadastrar cliente e responsáveis pelas decisões|Aprovar proposta / orçamento|Receber o contrato assinado|Definir prazos de cada fase|Programar os pagamentos (entrada, 3D, entrega final)|Receber pagamento da entrada|Enviar mensagem de boas-vindas e roteiro para início da obra',
   },
 };
 
@@ -201,7 +201,7 @@ const ENTREGA = {
   chave: 'entrega', nome: 'Entrega final do projeto', dias: 3,
   entrega: 'Projeto entregue, recebimento confirmado e versão final arquivada.',
   grupos: {
-    'Entrega': 'Conferir lista de documentos contratados|Gerar PDFs finais|Verificar arquivos e páginas|Organizar arquivos por disciplina|Identificar revisão final|Entregar memoriais|Entregar especificações|Entregar arquivos editáveis, se contratados|Registrar data da entrega|Solicitar confirmação de recebimento|Arquivar versão final|Registrar eventuais pendências',
+    'Entrega': 'Conferir lista de documentos contratados|Gerar PDFs finais|Verificar arquivos e páginas|Organizar arquivos por disciplina|Identificar revisão final|Entrega da caixa personalizada|Envio dos arquivos digitais por e-mail (DWG, PDF, RRT e caderno de imagens)|Registrar data da entrega|Solicitar confirmação de recebimento|Envio de agradecimento|Arquivar versão final|Registrar eventuais pendências',
   },
 };
 

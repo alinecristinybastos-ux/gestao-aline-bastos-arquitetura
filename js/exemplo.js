@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221714';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221714';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221714';
-import { hoje, somarDias } from './util.js?v=202611221714';
+import { store, inserir, atualizar } from './dados.js?v=202611221718';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221718';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221718';
+import { hoje, somarDias } from './util.js?v=202611221718';
 
 const d = (n) => somarDias(hoje(), n);
 
