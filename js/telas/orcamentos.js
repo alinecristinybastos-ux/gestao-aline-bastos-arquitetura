@@ -1,13 +1,13 @@
 // =====================================================================
 //  ORÇAMENTOS / PROPOSTAS — controle e impressão com a identidade visual
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221529';
-import { h, icone, moeda, data, hoje, somarDias, formModal, confirmar, aviso, tentar } from '../util.js?v=202611221529';
-import { nav } from '../nav.js?v=202611221529';
-import { ESCRITORIO } from '../config.js?v=202611221529';
-import { CATEGORIAS, TIPOS, INTERVENCOES } from '../modelos.js?v=202611221529';
-import { opcoesClientes } from '../componentes.js?v=202611221529';
-import { novoProjeto } from './projetos.js?v=202611221529';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221646';
+import { h, icone, moeda, data, hoje, somarDias, formModal, confirmar, aviso, tentar } from '../util.js?v=202611221646';
+import { nav } from '../nav.js?v=202611221646';
+import { ESCRITORIO } from '../config.js?v=202611221646';
+import { CATEGORIAS, TIPOS, INTERVENCOES } from '../modelos.js?v=202611221646';
+import { opcoesClientes } from '../componentes.js?v=202611221646';
+import { novoProjeto } from './projetos.js?v=202611221646';
 
 const STATUS = { rascunho: 'Rascunho', enviado: 'Enviado', aprovado: 'Aprovado', recusado: 'Recusado' };
 const COR = { rascunho: 'neutro', enviado: 'areia', aprovado: 'ok', recusado: 'perigo' };
@@ -95,7 +95,7 @@ function formOrcamento(o = null) {
   const valores = o ? { ...o, cattipo: o.categoria ? `${o.categoria}:${o.tipo}` : '' } : { status: 'rascunho' };
   const m = formModal({
     titulo: o ? `Orçamento ${o.numero || ''}` : 'Novo orçamento', campos, valores, largura: 680,
-    extraRodape: o ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)}</button>
+    extraRodape: o ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>
       <button class="btn" type="button" data-imprimir>${icone('pdf', 16)} Proposta em PDF</button>` : '',
     onSalvar: async d => {
       if (!d.cliente_id && !d.cliente_nome) throw new Error('Informe o cliente ou o nome do interessado');
