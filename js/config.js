@@ -4,7 +4,7 @@
 //  Enquanto estiver vazio, o app abre em MODO DEMONSTRAÇÃO
 //  (dados de exemplo salvos só neste navegador).
 // =====================================================================
-export const SUPABASE_URL = 'https://tyasbuvwucoouocvjez.supabase.co';
+export const SUPABASE_URL = 'https://tyasbuvwucoouocvvjez.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable_YZfBb9SPin2woobyV6w-vg_4qeINFGr';
 
 // Pessoas da equipe interna (aparecem como responsáveis nas tarefas e checklists)
