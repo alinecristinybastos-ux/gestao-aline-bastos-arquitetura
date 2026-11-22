@@ -1,13 +1,13 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221718';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221718';
-import { EQUIPE } from './config.js?v=202611221718';
-import { abrirRecibo } from './recibo.js?v=202611221718';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221718';
-import { nav } from './nav.js?v=202611221718';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221718';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221728';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221728';
+import { EQUIPE } from './config.js?v=202611221728';
+import { abrirRecibo } from './recibo.js?v=202611221728';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221728';
+import { nav } from './nav.js?v=202611221728';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221728';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -167,29 +167,52 @@ export function formParceiro(parceiro = null, aoSalvar) {
 }
 
 // ---------------------------------------------------------------- tarefa
+export const TIPOS_TAREFA = { tarefa: 'Tarefa', projeto: 'Trabalhar no projeto', reuniao: 'Reunião' };
+
 export function formTarefa(tarefa = null, padrao = {}) {
   const campos = [
-    { nome: 'titulo', rotulo: 'Tarefa', obrigatorio: true, placeholder: 'Ex.: Renderizar 3D da sala' },
-    { nome: 'responsavel', rotulo: 'Responsável', tipo: 'select', opcoes: opcoesEquipe(), largura: 'meia' },
-    { nome: 'prazo', rotulo: 'Prazo', tipo: 'date', largura: 'meia' },
-    { nome: 'projeto_id', rotulo: 'Projeto', tipo: 'select', opcoes: opcoesProjetos(false), vazio: 'Nenhum (tarefa geral)', largura: 'meia' },
+    { nome: 'tipo', rotulo: 'Tipo', tipo: 'select', vazio: false, opcoes: Object.entries(TIPOS_TAREFA), largura: 'meia' },
+    { nome: 'responsavel', rotulo: 'Para quem', tipo: 'select', opcoes: opcoesEquipe(), largura: 'meia' },
+    { nome: 'projeto_id', rotulo: 'Projeto', tipo: 'select', opcoes: opcoesProjetos(false), vazio: 'Nenhum (geral)' },
+    { nome: 'titulo', rotulo: 'Título', obrigatorio: true, placeholder: 'Ex.: Renderizar 3D da sala; Reunião de apresentação…' },
+    { nome: 'dia', rotulo: 'Dia programado', tipo: 'date', largura: 'terco', ajuda: 'Dia da semana em que será feito' },
+    { nome: 'hora', rotulo: 'Horário', tipo: 'time', largura: 'terco' },
+    { nome: 'prazo', rotulo: 'Prazo final', tipo: 'date', largura: 'terco' },
     { nome: 'prioridade', rotulo: 'Prioridade', tipo: 'select', vazio: false, opcoes: [['alta', 'Alta'], ['media', 'Média'], ['baixa', 'Baixa']], largura: 'meia' },
     { nome: 'status', rotulo: 'Situação', tipo: 'select', vazio: false, opcoes: [['afazer', 'A fazer'], ['fazendo', 'Fazendo'], ['feito', 'Feito']], largura: 'meia' },
-    { nome: 'descricao', rotulo: 'Detalhes', tipo: 'textarea', linhas: 4 },
+    { nome: 'descricao', rotulo: 'Detalhes / pauta', tipo: 'textarea', linhas: 3 },
   ];
   const m = formModal({
-    titulo: tarefa ? 'Editar tarefa' : 'Nova tarefa', campos,
-    valores: tarefa || { prioridade: 'media', status: 'afazer', responsavel: EQUIPE[0], ...padrao },
+    titulo: tarefa ? 'Editar' : 'Programar', campos,
+    valores: tarefa ? { tipo: 'tarefa', ...tarefa } : { tipo: 'tarefa', prioridade: 'media', status: 'afazer', responsavel: EQUIPE[0], ...padrao },
     extraRodape: tarefa ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
     onSalvar: async (d) => {
+      if (d.tipo !== 'reuniao' && !d.hora) d.hora = null;
       if (tarefa) await atualizar('tarefas', tarefa.id, d);
       else await inserir('tarefas', { ...d, ordem: 0 });
-      aviso('Tarefa salva'); nav.recarregar();
+      aviso('Salvo'); nav.recarregar();
     },
   });
+  const f = m.el.querySelector('form');
+  let tituloAuto = '';
+  const tituloDoProjeto = () => {
+    const p = porId('projetos', f.projeto_id.value);
+    if (!p) return '';
+    const fase = faseAtual(p.id);
+    return `${p.nome}${fase ? ' · ' + fase.nome : ''}`;
+  };
+  const ajustar = () => {
+    const tipo = f.tipo.value;
+    f.hora.closest('.campo').classList.toggle('oculto', tipo !== 'reuniao');
+    f.titulo.placeholder = tipo === 'reuniao' ? 'Ex.: Reunião de apresentação do 3D' : tipo === 'projeto' ? 'Escolha o projeto acima' : 'Ex.: Renderizar 3D da sala';
+    if (tipo === 'projeto' && (!f.titulo.value || f.titulo.value === tituloAuto)) { tituloAuto = tituloDoProjeto(); f.titulo.value = tituloAuto; }
+  };
+  f.tipo.addEventListener('change', ajustar);
+  f.projeto_id.addEventListener('change', ajustar);
+  ajustar();
   m.el.querySelector('[data-excluir]')?.addEventListener('click', async () => {
-    if (!await confirmar('Excluir esta tarefa?', { ok: 'Excluir', perigo: true })) return;
-    await tentar(() => remover('tarefas', tarefa.id), 'Tarefa excluída');
+    if (!await confirmar('Excluir este item?', { ok: 'Excluir', perigo: true })) return;
+    await tentar(() => remover('tarefas', tarefa.id), 'Excluído');
     m.fechar(); nav.recarregar();
   });
 }

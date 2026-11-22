@@ -234,11 +234,18 @@ create table if not exists tarefas (
   responsavel text,
   projeto_id uuid references projetos(id) on delete set null,
   prazo date,
+  dia date,                         -- dia programado na semana
+  hora text,                        -- horário (reuniões)
+  tipo text default 'tarefa',       -- tarefa | projeto | reuniao
   prioridade text default 'media', -- baixa | media | alta
   status text default 'afazer',     -- afazer | fazendo | feito
   ordem int default 0,
   criado_em timestamptz default now()
 );
+
+alter table if exists tarefas add column if not exists dia date;
+alter table if exists tarefas add column if not exists hora text;
+alter table if exists tarefas add column if not exists tipo text default 'tarefa';
 
 -- ---------- ANEXOS (arquivos) ----------
 create table if not exists anexos (

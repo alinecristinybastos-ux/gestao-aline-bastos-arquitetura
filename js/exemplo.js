@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221718';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221718';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221718';
-import { hoje, somarDias } from './util.js?v=202611221718';
+import { store, inserir, atualizar } from './dados.js?v=202611221728';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221728';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221728';
+import { hoje, somarDias } from './util.js?v=202611221728';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -113,7 +113,11 @@ export async function criarDadosExemplo() {
     { titulo: 'Detalhamento da marcenaria dos consultórios', responsavel: 'Julia', projeto_id: p2.id, prazo: d(12), prioridade: 'media', status: 'afazer' },
     { titulo: 'Enviar proposta para Rodrigo (cozinha)', responsavel: 'Aline', prazo: d(3), prioridade: 'baixa', status: 'afazer' },
     { titulo: 'Reunião de apresentação do estudo preliminar', responsavel: 'Aline', projeto_id: p1.id, prazo: d(-12), prioridade: 'media', status: 'feito' },
-  ].map((t, i) => ({ ...t, ordem: i })));
+    { tipo: 'reuniao', titulo: 'Reunião de apresentação do 3D', responsavel: 'Aline', projeto_id: p2.id, dia: d(2), hora: '10:00', prioridade: 'alta', status: 'afazer' },
+    { tipo: 'projeto', titulo: 'Residência Costa · Anteprojeto', responsavel: 'Aline', projeto_id: p1.id, dia: d(1), prioridade: 'media', status: 'afazer' },
+    { tipo: 'projeto', titulo: 'Clínica Viver Bem · Estudo preliminar', responsavel: 'Julia', projeto_id: p2.id, dia: d(1), prazo: d(3), prioridade: 'alta', status: 'fazendo' },
+    { tipo: 'reuniao', titulo: 'Visita à obra do galpão', responsavel: 'Aline', projeto_id: p3.id, dia: d(3), hora: '14:30', prioridade: 'media', status: 'afazer' },
+  ].map((t, i) => ({ tipo: 'tarefa', ...t, ordem: i })));
 
   await inserir('orcamentos', [
     { numero: '001/' + hoje().slice(0, 4), cliente_nome: 'Beatriz Fontes', telefone: '(31) 98888-1111', descricao: 'Reforma de cobertura duplex', categoria: 'interiores', tipo: 'residencial', intervencao: 'reforma', area_m2: 220, valor: 28000, data: d(-8), validade: d(7), status: 'enviado', condicoes: '30% na assinatura · 30% na apresentação do 3D · 40% na entrega final', escopo: 'Briefing e levantamento\nEstudo preliminar com 3D\nExecutivo de interiores com detalhamento de marcenaria' },

@@ -451,6 +451,31 @@ tr.saude-vermelho td:first-child { box-shadow: inset 5px 0 0 var(--perigo); }
 .legenda-saude i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 .legenda-saude b { font-weight: 400; color: var(--texto); }
 
+/* programação semanal */
+.quadro-semana { grid-auto-columns: minmax(150px, 1fr); gap: 10px; }
+.quadro-semana .coluna { min-height: 60vh; display: flex; flex-direction: column; }
+.quadro-semana .coluna .add-col { margin-top: auto; width: 100%; justify-content: flex-start; font-size: .85rem; }
+.col-programar { background: #e9e6dc; }
+.col-hoje { background: var(--salvia-clara); box-shadow: inset 0 3px 0 var(--verde); }
+.col-passado { opacity: .85; }
+.coluna-cab .data-col { font-size: .78rem; color: var(--texto-3); }
+.aviso-col { font-size: .78rem; color: var(--perigo); padding: 0 4px 6px; }
+.cartao-prog { display: flex; gap: 8px; background: var(--papel); border: 1px solid var(--linha); border-left: 4px solid var(--salvia); border-radius: 8px; padding: 9px 10px; margin-bottom: 8px; cursor: grab; box-shadow: 0 1px 2px rgba(37, 50, 25, .05); }
+.cartao-prog:hover { box-shadow: 0 4px 12px rgba(37, 50, 25, .12); }
+.cartao-prog.tipo-reuniao { border-left-color: var(--terracota); background: #fffaf5; }
+.cartao-prog.tipo-projeto { border-left-color: var(--verde); }
+.cartao-prog.feito { opacity: .55; }
+.cartao-prog.feito .tit-prog { text-decoration: line-through; }
+.cartao-prog.arrastando { opacity: .4; }
+.caixa-prog { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--linha-forte); background: var(--papel); display: grid; place-items: center; color: #fff; cursor: pointer; flex-shrink: 0; margin-top: 1px; padding: 0; }
+.cartao-prog.feito .caixa-prog { background: var(--verde); border-color: var(--verde); }
+.corpo-prog { min-width: 0; flex: 1; }
+.hora-prog { font-size: .75rem; color: var(--terracota); display: flex; gap: 4px; align-items: center; margin-bottom: 2px; }
+.hora-prog.proj { color: var(--verde); }
+.tit-prog { font-size: .9rem; line-height: 1.3; }
+.sub-prog { font-size: .76rem; color: var(--texto-2); margin-top: 2px; }
+.meta-prog { margin-top: 5px; }
+
 /* ---------------------------------------------------------------- modal */
 .modal-fundo { position: fixed; inset: 0; background: rgba(23, 31, 16, .45); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; z-index: 50; overflow-y: auto; animation: aparecer .15s ease-out; }
 .modal { background: var(--papel); border-radius: 14px; width: 100%; box-shadow: var(--sombra-forte); display: flex; flex-direction: column; max-height: 90vh; animation: subir .18s ease-out; }
