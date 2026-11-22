@@ -25,7 +25,7 @@ export async function iniciar() {
     lerDemo();
     return { logado: true, usuario: { email: 'demonstracao' } };
   }
-  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm');
+  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm');
   sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const { data } = await sb.auth.getSession();
   return { logado: !!data.session, usuario: data.session?.user };

@@ -42,7 +42,7 @@ Os pagamentos padrão são 30% de entrada, 30% na apresentação do 3D e 40% na 
 2. Abra **SQL Editor → New query**, cole todo o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e clique em **Run**.
 3. Em **Authentication → Users → Add user → Create new user**, crie o login da Aline e o da Julia, com e-mail e senha. Marque *Auto Confirm User*.
 4. Em **Authentication → Sign In / Providers → Email**, você pode desligar *Allow new users to sign up*, para que ninguém mais crie conta.
-5. Em **Project Settings → API**, copie a **Project URL** e a chave **anon public**.
+5. Em **Project Settings → API Keys**, copie a **Publishable key** (`sb_publishable_…`). A Project URL é `https://<id-do-projeto>.supabase.co`.
 
 ### 2. Configurar o app
 
@@ -50,10 +50,10 @@ Abra `js/config.js` e preencha:
 
 ```js
 export const SUPABASE_URL = 'https://xxxxxxxx.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOi...';
+export const SUPABASE_ANON_KEY = 'sb_publishable_...';
 ```
 
-A chave *anon* pode ficar no código. Quem protege os dados é o login, pelas regras de segurança (RLS) criadas no `schema.sql`.
+A chave *publishable* pode ficar no código (nunca use a *secret*). Quem protege os dados é o login, pelas regras de segurança (RLS) criadas no `schema.sql`.
 
 Enquanto o `config.js` estiver vazio, o app abre em **modo demonstração**, com dados de exemplo guardados só no navegador.
 
