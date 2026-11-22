@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221307';
-import { h, icone, formModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221307';
-import { EQUIPE } from './config.js?v=202611221307';
-import { DISCIPLINAS } from './modelos.js?v=202611221307';
-import { nav } from './nav.js?v=202611221307';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js?v=202611221307';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221330';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221330';
+import { EQUIPE } from './config.js?v=202611221330';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS } from './modelos.js?v=202611221330';
+import { nav } from './nav.js?v=202611221330';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js?v=202611221330';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -143,7 +143,7 @@ export function formParceiro(parceiro = null, aoSalvar) {
   const campos = [
     { nome: 'nome', rotulo: 'Nome', obrigatorio: true, largura: 'meia' },
     { nome: 'empresa', rotulo: 'Empresa', largura: 'meia' },
-    { nome: 'especialidade', rotulo: 'Especialidade principal', tipo: 'select', opcoes: DISCIPLINAS.map(d => [d, d]), largura: 'meia' },
+    { nome: 'especialidade', rotulo: 'Especialidade principal', tipo: 'select', opcoes: opcoesDisciplina(parceiro?.especialidade), largura: 'meia' },
     { nome: 'registro', rotulo: 'CREA / CAU', largura: 'meia' },
     { nome: 'telefone', rotulo: 'Telefone / WhatsApp', largura: 'meia', tipo: 'tel' },
     { nome: 'email', rotulo: 'E-mail', largura: 'meia', tipo: 'email' },
@@ -194,7 +194,7 @@ export function formTarefa(tarefa = null, padrao = {}) {
 export function formComplementar(c = null, padrao = {}) {
   const campos = [
     { nome: 'projeto_id', rotulo: 'Projeto', tipo: 'select', opcoes: opcoesProjetos(false), obrigatorio: true, largura: 'meia' },
-    { nome: 'disciplina', rotulo: 'Disciplina', tipo: 'select', opcoes: DISCIPLINAS.map(d => [d, d]), obrigatorio: true, largura: 'meia' },
+    { nome: 'disciplina', rotulo: 'Disciplina', tipo: 'select', opcoes: opcoesDisciplina(c?.disciplina || padrao.disciplina), obrigatorio: true, largura: 'meia' },
     { nome: 'parceiro_id', rotulo: 'Engenheiro parceiro', tipo: 'select', opcoes: opcoesParceiros(), vazio: 'A definir', largura: 'meia' },
     { nome: 'status', rotulo: 'Situação', tipo: 'select', vazio: false, opcoes: Object.entries(STATUS_COMPL), largura: 'meia' },
     { nome: 'enviado_em', rotulo: 'Enviado em', tipo: 'date', largura: 'terco' },
@@ -250,13 +250,63 @@ export function linhaComplementar(c, { mostrarProjeto = true } = {}) {
     <td>${h(nomeParceiro(c.parceiro_id))}</td>
     <td><span class="tag tag-${st}">${complAtrasado(c) ? 'Atrasado · ' : ''}${h(STATUS_COMPL[c.status] || c.status)}</span></td>
     <td>${c.status === 'entregue' ? `<span class="fraco">entregue ${data(c.entregue_em)}</span>` : tagPrazo(c.prazo)}</td>
-    <td class="num">${moeda(c.valor)}</td>
-    <td>${c.pago ? '<span class="tag tag-ok">Pago</span>' : '<span class="tag tag-alerta">A pagar</span>'}</td>
+    <td class="num">${Number(c.valor) ? moeda(c.valor) : '—'}</td>
+    <td>${c.pago ? '<span class="tag tag-ok">Pago</span>' : Number(c.valor) ? '<span class="tag tag-alerta">A pagar</span>' : '<span class="fraco">valor a definir</span>'}</td>
     <td class="fraco">${n ? `${icone('anexo', 14)} ${n}` : ''}</td>
   </tr>`;
 }
 export function ligarLinhasComplementares(raiz) {
   raiz.querySelectorAll('[data-compl]').forEach(tr => tr.addEventListener('click', () => formComplementar(porId('complementares', tr.dataset.compl))));
+}
+
+// ---------------------------------------------------------------- complementares contratados
+/** Prazo sugerido: antes da compatibilização (ou fim do executivo). */
+export function prazoSugeridoComplementar(projetoId) {
+  const ets = etapasDo(projetoId);
+  const comp = ets.find(e => e.chave === 'compatibilizacao');
+  if (comp?.data_inicio) return comp.data_inicio;
+  return (ets.find(e => e.chave === 'executivo') || ets.find(e => e.chave === 'desenvolvimento'))?.prazo || null;
+}
+
+export async function registrarComplementares(projetoId, disciplinas) {
+  const ja = store.complementares.filter(c => c.projeto_id === projetoId).map(c => c.disciplina);
+  const novas = disciplinas.filter(d => !ja.includes(d));
+  const prazo = prazoSugeridoComplementar(projetoId);
+  if (novas.length) await inserir('complementares', novas.map(d => ({ projeto_id: projetoId, disciplina: d, status: 'a_enviar', prazo, valor: 0, pago: false })));
+  return novas.length;
+}
+
+export function chipsComplementares(selecionados, extras = true) {
+  const lista = extras ? DISCIPLINAS.filter(d => d !== 'Outro') : COMPLEMENTARES_PRINCIPAIS;
+  return `<div class="chips">${lista.map(d => `<button type="button" class="chip ${selecionados.includes(d) ? 'sel' : ''}" data-comp-ctr="${h(d)}">${selecionados.includes(d) ? '✓ ' : ''}${h(d)}</button>`).join('')}</div>`;
+}
+
+/** Janela para marcar/desmarcar os complementares contratados de um projeto. */
+export function formComplementaresContratados(projetoId) {
+  const existentes = store.complementares.filter(c => c.projeto_id === projetoId);
+  let sel = existentes.map(c => c.disciplina);
+  const m = abrirModal({
+    titulo: 'Complementares contratados pelo cliente', largura: 640,
+    corpo: `<p class="fraco" style="margin-bottom:12px">Marque o que foi contratado. Cada um vira uma linha para você escolher o parceiro, o prazo e o valor, e acompanhar a entrega.</p><div id="cc-chips"></div>`,
+    rodape: `<span class="espaco"></span><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>Salvar</button>`,
+  });
+  const desenhar = () => {
+    m.el.querySelector('#cc-chips').innerHTML = chipsComplementares(sel);
+    m.el.querySelectorAll('[data-comp-ctr]').forEach(b => b.addEventListener('click', () => {
+      const d = b.dataset.compCtr; sel = sel.includes(d) ? sel.filter(x => x !== d) : [...sel, d]; desenhar();
+    }));
+  };
+  desenhar();
+  m.el.querySelector('[data-ok]').addEventListener('click', async () => {
+    const remover_ = existentes.filter(c => !sel.includes(c.disciplina));
+    const presos = remover_.filter(c => c.parceiro_id || Number(c.valor) || c.status !== 'a_enviar');
+    if (presos.length && !await confirmar(`${presos.map(c => c.disciplina).join(', ')} já ${presos.length > 1 ? 'têm' : 'tem'} parceiro, valor ou envio registrado. Remover mesmo assim?`, { ok: 'Remover', perigo: true })) return;
+    await tentar(async () => {
+      for (const c of remover_) await remover('complementares', c.id);
+      await registrarComplementares(projetoId, sel);
+    }, 'Complementares atualizados');
+    m.fechar(); nav.recarregar();
+  });
 }
 
 // ---------------------------------------------------------------- recebimento

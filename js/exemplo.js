@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221307';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221307';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221307';
-import { hoje, somarDias } from './util.js?v=202611221307';
+import { store, inserir, atualizar } from './dados.js?v=202611221330';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221330';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221330';
+import { hoje, somarDias } from './util.js?v=202611221330';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -48,9 +48,9 @@ export async function criarDadosExemplo() {
     { nome: 'Rodrigo Albuquerque', telefone: '(31) 99555-7788', cidade: 'Belo Horizonte', origem: 'Google' },
   ]);
   const [carlos, fernanda, marcos] = await inserir('parceiros', [
-    { nome: 'Eng. Carlos Ribeiro', especialidade: 'Estrutural', empresa: 'Ribeiro Estruturas', registro: 'CREA-MG 123456', telefone: '(31) 99222-3344', pix: 'carlos@ribeiroestruturas.com' },
-    { nome: 'Eng. Fernanda Lima', especialidade: 'Elétrico', registro: 'CREA-MG 234567', telefone: '(31) 99333-4455' },
-    { nome: 'Eng. Marcos Tavares', especialidade: 'Hidrossanitário', empresa: 'MT Projetos', registro: 'CREA-MG 345678', telefone: '(31) 99444-5566' },
+    { nome: 'Eng. Carlos Ribeiro', especialidade: 'Projeto estrutural', empresa: 'Ribeiro Estruturas', registro: 'CREA-MG 123456', telefone: '(31) 99222-3344', pix: 'carlos@ribeiroestruturas.com' },
+    { nome: 'Eng. Fernanda Lima', especialidade: 'Projeto elétrico de baixa tensão', registro: 'CREA-MG 234567', telefone: '(31) 99333-4455' },
+    { nome: 'Eng. Marcos Tavares', especialidade: 'Projeto hidrossanitário e drenagem', empresa: 'MT Projetos', registro: 'CREA-MG 345678', telefone: '(31) 99444-5566' },
   ]);
 
   const p1 = await projetoExemplo({ cliente: costa, nome: 'Residência Costa', categoria: 'arquitetonico', tipo: 'residencial', intervencao: 'novo',
@@ -66,12 +66,12 @@ export async function criarDadosExemplo() {
     inicio: d(-9), valor: 3200, endereco: 'Rua Tomé de Souza, 300', area: 75, concluir: 2, parcial: 0.2, pagos: 1 });
 
   await inserir('complementares', [
-    { projeto_id: p1.id, parceiro_id: carlos.id, disciplina: 'Estrutural', status: 'andamento', enviado_em: d(-6), prazo: d(14), valor: 6500,
+    { projeto_id: p1.id, parceiro_id: carlos.id, disciplina: 'Projeto estrutural', status: 'andamento', enviado_em: d(-6), prazo: d(14), valor: 6500,
       informacoes: 'Base arquitetônica do anteprojeto rev. 01. Laje da área gourmet com piscina sobre a garagem. Balanço de 2,5 m na fachada frontal.' },
-    { projeto_id: p1.id, parceiro_id: fernanda.id, disciplina: 'Elétrico', status: 'a_enviar', prazo: d(28), valor: 3800, informacoes: 'Aguardar layout de interiores. Prever carregador de carro elétrico e automação.' },
-    { projeto_id: p3.id, parceiro_id: marcos.id, disciplina: 'Hidrossanitário', status: 'revisao', enviado_em: d(-40), prazo: d(-2), valor: 7200,
+    { projeto_id: p1.id, parceiro_id: fernanda.id, disciplina: 'Projeto elétrico de baixa tensão', status: 'a_enviar', prazo: d(28), valor: 3800, informacoes: 'Aguardar layout de interiores. Prever carregador de carro elétrico e automação.' },
+    { projeto_id: p3.id, parceiro_id: marcos.id, disciplina: 'Projeto hidrossanitário e drenagem', status: 'revisao', enviado_em: d(-40), prazo: d(-2), valor: 7200,
       informacoes: 'Ampliação do vestiário (NR-24) e nova caixa de gordura do refeitório.' },
-    { projeto_id: p3.id, parceiro_id: carlos.id, disciplina: 'Estrutural', status: 'entregue', enviado_em: d(-60), prazo: d(-20), entregue_em: d(-22), valor: 14000, pago: true, pago_em: d(-15) },
+    { projeto_id: p3.id, parceiro_id: carlos.id, disciplina: 'Projeto estrutural', status: 'entregue', enviado_em: d(-60), prazo: d(-20), entregue_em: d(-22), valor: 14000, pago: true, pago_em: d(-15) },
   ]);
 
   await inserir('tarefas', [

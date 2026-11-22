@@ -2,11 +2,11 @@
 //  FINANCEIRO — a receber (programados por data ou por fase),
 //  a pagar aos parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221307';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221307';
-import { nav } from '../nav.js?v=202611221307';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro } from '../negocio.js?v=202611221307';
-import { tagRecebimento, marcarRecebido, formRecebimento, formComplementar } from '../componentes.js?v=202611221307';
+import { store, porId, atualizar } from '../dados.js?v=202611221330';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221330';
+import { nav } from '../nav.js?v=202611221330';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro } from '../negocio.js?v=202611221330';
+import { tagRecebimento, marcarRecebido, formRecebimento, formComplementar } from '../componentes.js?v=202611221330';
 
 let aba = 'receber';
 let ano = Number(hoje().slice(0, 4));

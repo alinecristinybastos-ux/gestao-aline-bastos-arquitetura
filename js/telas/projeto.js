@@ -2,20 +2,20 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221307';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221307';
-import { nav } from '../nav.js?v=202611221307';
-import { EQUIPE } from '../config.js?v=202611221307';
-import { CATEGORIAS } from '../modelos.js?v=202611221307';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221330';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221330';
+import { nav } from '../nav.js?v=202611221330';
+import { EQUIPE } from '../config.js?v=202611221330';
+import { CATEGORIAS } from '../modelos.js?v=202611221330';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento,
-} from '../negocio.js?v=202611221307';
+} from '../negocio.js?v=202611221330';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
-  ligarLinhasComplementares, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221307';
-import { STATUS_PROJ } from './projetos.js?v=202611221307';
+  ligarLinhasComplementares, formComplementaresContratados, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
+} from '../componentes.js?v=202611221330';
+import { STATUS_PROJ } from './projetos.js?v=202611221330';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -342,13 +342,19 @@ function abaComplementares(area, p) {
   const lista = store.complementares.filter(c => c.projeto_id === p.id);
   area.innerHTML = `<div class="cartao">
     <div class="cartao-cab"><h2>Projetos complementares com engenheiros parceiros</h2>
-      <button class="btn btn-peq btn-primario" id="add-compl">${icone('enviar', 14)} Enviar ao parceiro</button></div>
+      <button class="btn btn-peq" id="ctr-compl">${icone('check', 14)} Complementares contratados</button>
+      <button class="btn btn-peq btn-primario" id="add-compl">${icone('mais', 14)} Outro complementar</button></div>
+    ${lista.length ? `<div class="cartao-corpo" style="padding-bottom:4px"><div class="legenda">
+      <span>${lista.filter(c => c.status === 'entregue').length} de ${lista.length} entregues</span>
+      <span>${lista.filter(c => !c.parceiro_id).length ? `<span class="tag tag-alerta">${lista.filter(c => !c.parceiro_id).length} sem parceiro definido</span>` : ''}</span>
+      <span>clique em uma linha para escolher o parceiro, prazo, valor e anexar arquivos</span></div></div>` : ''}
     ${lista.length ? `<div class="tabela-envolve"><table class="tabela"><thead><tr><th>Disciplina</th><th>Parceiro</th><th>Situação</th><th>Prazo</th><th class="num">Valor</th><th>Pagamento</th><th></th></tr></thead>
       <tbody>${lista.map(c => linhaComplementar(c, { mostrarProjeto: false })).join('')}</tbody>
       <tfoot><tr><td colspan="4">Total cobrado pelos parceiros</td><td class="num">${moeda(lista.reduce((s, c) => s + Number(c.valor || 0), 0))}</td><td colspan="2"></td></tr></tfoot></table></div>`
-      : '<div class="vazio">Nenhum complementar enviado para este projeto.<br>Registre aqui o que foi passado a cada engenheiro, com arquivos, prazo e preço.</div>'}
+      : `<div class="vazio">O cliente contratou projetos complementares?<br><button class="btn btn-primario" id="ctr-compl2" style="margin-top:10px">${icone('check', 14)} Marcar complementares contratados</button></div>`}
   </div>`;
   area.querySelector('#add-compl').addEventListener('click', () => formComplementar(null, { projeto_id: p.id }));
+  area.querySelectorAll('#ctr-compl, #ctr-compl2').forEach(b => b.addEventListener('click', () => formComplementaresContratados(p.id)));
   ligarLinhasComplementares(area);
 }
 

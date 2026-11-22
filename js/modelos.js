@@ -37,12 +37,23 @@ export const INTERVENCOES = { novo: 'Novo', reforma: 'Reforma', ampliacao: 'Ampl
 // tipos que pedem novo / reforma / ampliação
 export const TIPOS_COM_INTERVENCAO = ['residencial', 'comercial', 'industrial'];
 
-export const DISCIPLINAS = [
-  'Estrutural', 'Fundações', 'Elétrico', 'Hidrossanitário', 'Águas pluviais',
-  'Climatização (HVAC)', 'Prevenção e combate a incêndio (PPCI)', 'SPDA',
-  'Gás', 'Cabeamento / Automação', 'Luminotécnico', 'Paisagismo',
-  'Impermeabilização', 'Topografia', 'Sondagem', 'Outro',
+// Complementares que o escritório contrata com os engenheiros parceiros
+// (aparecem para marcar no cadastro do projeto)
+export const COMPLEMENTARES_PRINCIPAIS = [
+  'Projeto estrutural',
+  'Projeto hidrossanitário e drenagem',
+  'Projeto elétrico de baixa tensão',
+  'Projeto de subestação',
+  'Projeto SPDA',
+  'Projeto de incêndio',
 ];
+export const DISCIPLINAS = [
+  ...COMPLEMENTARES_PRINCIPAIS,
+  'Fundações', 'Climatização (HVAC)', 'Gás', 'Cabeamento / Automação', 'Luminotécnico',
+  'Paisagismo', 'Impermeabilização', 'Topografia', 'Sondagem', 'Outro',
+];
+/** Opções de disciplina incluindo um valor antigo que não esteja mais na lista. */
+export const opcoesDisciplina = (atual) => [...DISCIPLINAS, ...(atual && !DISCIPLINAS.includes(atual) ? [atual] : [])].map(d => [d, d]);
 
 // Fases usadas nas colunas do quadro de projetos
 export const FASES = [
