@@ -93,10 +93,10 @@ a { color: var(--verde); text-decoration: none; }
 /* marca d'água (isologo) bem grande no fundo bege, saindo pela borda de baixo */
 .principal::before {
   content: ''; position: fixed; z-index: -1; pointer-events: none;
-  left: calc(var(--lateral) + 4px); top: -3vh; height: 130vh; aspect-ratio: 1300 / 1530;
+  left: calc(var(--lateral) + 4px); top: -24vh; height: 165vh; aspect-ratio: 1300 / 1530;
   background: url('../assets/marca-dagua.png') no-repeat left top / contain;
 }
-@media (max-width: 860px) { .principal::before { left: -8vw; top: 4vh; height: auto; width: 125vw; } }
+@media (max-width: 860px) { .principal::before { left: -12vw; top: -6vh; height: auto; width: 150vw; } }
 @media print { .principal::before { display: none; } }
 .topo-movel { display: none; }
 .conteudo { padding: 28px 34px 60px; max-width: 1320px; width: 100%; margin: 0 auto; }
