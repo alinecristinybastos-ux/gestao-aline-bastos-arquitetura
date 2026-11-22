@@ -1,12 +1,12 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611221511';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221511';
-import { nav } from '../nav.js?v=202611221511';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611221511';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221511';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221511';
+import { store, atualizar } from '../dados.js?v=202611221512';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221512';
+import { nav } from '../nav.js?v=202611221512';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611221512';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221512';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221512';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };
@@ -186,7 +186,7 @@ export function novoProjeto(pre = {}) {
   }
   function passo2() {
     const tipos = TIPOS[st.categoria];
-    const desc = { arquitetonico: 'Residencial, comercial, industrial, paginação de piso e forro', interiores: 'Residencial, comercial e industrial', complementares: 'Sempre terceirizados com engenheiros parceiros' };
+    const desc = { arquitetonico: 'Residencial, comercial, industrial, misto, paginação de piso e forro — inclusive legalização', interiores: 'Residencial, comercial, industrial e misto', complementares: 'Sempre terceirizados com engenheiros parceiros' };
     return `
       <div class="rotulo-sec">Categoria</div>
       <div class="opcoes-tipo">${Object.entries(CATEGORIAS).map(([k, v]) => `<button type="button" class="opcao-tipo ${st.categoria === k ? 'sel' : ''}" data-cat="${k}"><b>${v}</b><small>${desc[k]}</small></button>`).join('')}</div>
