@@ -1,78 +1,99 @@
 // =====================================================================
 //  PROGRAMAÇÃO SEMANAL — uma semana por pessoa (Aline, Julia)
-//  Colunas: "A programar" + segunda a sábado. Cartões = tarefas,
-//  reuniões e "trabalhar no projeto". Arraste entre os dias.
+//  Coluna "Projetos" = projetos em andamento (paleta): arraste um
+//  projeto para o dia em que vai trabalhar nele. O mesmo projeto pode
+//  ir para vários dias. Reuniões podem ser marcadas em cada dia.
+//  Cada dia programado é um registro em "tarefas" com tipo 'projeto'.
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221728';
-import { h, icone, hoje, somarDias, tentar, diasAte } from '../util.js?v=202611221728';
-import { nav } from '../nav.js?v=202611221728';
-import { EQUIPE } from '../config.js?v=202611221728';
-import { formTarefa, tagPrazo, rotuloProjeto } from '../componentes.js?v=202611221728';
+import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221734';
+import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221734';
+import { nav } from '../nav.js?v=202611221734';
+import { EQUIPE } from '../config.js?v=202611221734';
+import { formTarefa } from '../componentes.js?v=202611221734';
+import { faseAtual, saudeProjeto, nomeCliente } from '../negocio.js?v=202611221734';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 let pessoa = null;
-let semana = null; // data (segunda-feira) da semana mostrada
+let semana = null; // segunda-feira da semana mostrada
+let busca = '';
 
 try { pessoa = localStorage.getItem('ab_prog_pessoa'); } catch { /* ignora */ }
 
 function segundaDe(iso) {
   const d = new Date(iso + 'T12:00:00');
-  const dia = (d.getDay() + 6) % 7; // 0 = segunda
-  return somarDias(iso, -dia);
+  return somarDias(iso, -((d.getDay() + 6) % 7));
 }
 /** Semana "atual": no domingo já mostra a semana que começa no dia seguinte. */
 function semanaAtual() {
-  const d = new Date(hoje() + 'T12:00:00');
-  return d.getDay() === 0 ? somarDias(hoje(), 1) : segundaDe(hoje());
+  return new Date(hoje() + 'T12:00:00').getDay() === 0 ? somarDias(hoje(), 1) : segundaDe(hoje());
 }
 const curta = (iso) => { const [, m, d] = iso.split('-'); return `${Number(d)} ${MESES[Number(m) - 1]}`; };
+const tituloProjeto = (p) => { const f = faseAtual(p.id); return `${p.nome}${f ? ' · ' + f.nome : ''}`; };
 
-function cartao(t) {
-  const p = porId('projetos', t.projeto_id);
-  const feito = t.status === 'feito';
-  const tipo = t.tipo || 'tarefa';
-  const atrasado = !feito && t.prazo && diasAte(t.prazo) < 0;
-  return `<div class="cartao-prog tipo-${tipo} ${feito ? 'feito' : ''}" draggable="true" data-prog="${t.id}">
-    <button class="caixa-prog" data-feito="${t.id}" title="${feito ? 'Desmarcar' : 'Marcar como feito'}">${feito ? icone('check', 13) : ''}</button>
+// ---------------------------------------------------------------- cartões
+function cartaoPaleta(p, vezes) {
+  const f = faseAtual(p.id);
+  return `<div class="cartao-prog paleta saude-${saudeProjeto(p).cor}" draggable="true" data-paleta="${p.id}" title="Arraste para um dia (ou clique para escolher os dias)">
     <div class="corpo-prog">
-      ${tipo === 'reuniao' ? `<div class="hora-prog">${icone('clientes', 12)} ${h(t.hora || 'Reunião')}</div>` : ''}
-      ${tipo === 'projeto' ? `<div class="hora-prog proj">${icone('projetos', 12)} Projeto</div>` : ''}
-      <div class="tit-prog">${h(t.titulo)}</div>
-      ${p && tipo !== 'projeto' ? `<div class="sub-prog">${h(rotuloProjeto(p))}</div>` : p ? `<div class="sub-prog">${h(porId('clientes', p.cliente_id)?.nome || '')}</div>` : ''}
-      ${t.prazo && !feito ? `<div class="meta-prog">${atrasado ? '<span class="tag tag-atrasado">prazo vencido</span>' : tagPrazo(t.prazo)}</div>` : ''}
+      <div class="tit-prog">${h(p.nome)}</div>
+      <div class="sub-prog">${h(nomeCliente(p.cliente_id))}</div>
+      ${f ? `<div class="sub-prog fase-prog">${icone('seta', 11)} ${h(f.nome)}</div>` : ''}
+      ${vezes ? `<div class="vezes-prog">${vezes}× nesta semana</div>` : ''}
     </div>
   </div>`;
 }
 
-function ordenar(a, b) {
-  const ha = a.tipo === 'reuniao' ? (a.hora || '99') : '98', hb = b.tipo === 'reuniao' ? (b.hora || '99') : '98';
-  return (a.status === 'feito') - (b.status === 'feito') || ha.localeCompare(hb)
-    || ({ alta: 0, media: 1, baixa: 2 }[a.prioridade] ?? 1) - ({ alta: 0, media: 1, baixa: 2 }[b.prioridade] ?? 1);
+function cartaoDia(t) {
+  const feito = t.status === 'feito';
+  if (t.tipo === 'reuniao') {
+    const p = porId('projetos', t.projeto_id);
+    return `<div class="cartao-prog tipo-reuniao ${feito ? 'feito' : ''}" draggable="true" data-item="${t.id}">
+      <button class="caixa-prog" data-feito="${t.id}" title="${feito ? 'Desmarcar' : 'Feita'}">${feito ? icone('check', 13) : ''}</button>
+      <div class="corpo-prog" data-editar="${t.id}">
+        <div class="hora-prog">${icone('clientes', 12)} ${h(t.hora || 'Reunião')}</div>
+        <div class="tit-prog">${h(t.titulo)}</div>
+        ${p ? `<div class="sub-prog">${h(nomeCliente(p.cliente_id))} — ${h(p.nome)}</div>` : ''}
+      </div>
+    </div>`;
+  }
+  const p = porId('projetos', t.projeto_id);
+  if (!p) return '';
+  const f = faseAtual(p.id);
+  return `<div class="cartao-prog tipo-projeto saude-${saudeProjeto(p).cor} ${feito ? 'feito' : ''}" draggable="true" data-item="${t.id}">
+    <button class="caixa-prog" data-feito="${t.id}" title="${feito ? 'Desmarcar' : 'Trabalhei neste projeto'}">${feito ? icone('check', 13) : ''}</button>
+    <div class="corpo-prog" data-abrir="${p.id}" title="Abrir o projeto">
+      <div class="tit-prog">${h(p.nome)}</div>
+      <div class="sub-prog">${h(nomeCliente(p.cliente_id))}</div>
+      ${f ? `<div class="sub-prog fase-prog">${icone('seta', 11)} ${h(f.nome)}</div>` : ''}
+    </div>
+    <button class="btn-icone tirar-prog" data-tirar="${t.id}" title="Tirar deste dia">${icone('x', 13)}</button>
+  </div>`;
 }
 
+const ehPlanejamento = (t) => t.tipo === 'projeto' || t.tipo === 'reuniao';
+
+// ---------------------------------------------------------------- tela
 export function render(el) {
   if (!pessoa || !EQUIPE.includes(pessoa)) pessoa = EQUIPE[0];
   if (!semana) semana = semanaAtual();
   const dias = DIAS.map((nome, i) => ({ nome, iso: somarDias(semana, i) }));
-  const fim = somarDias(semana, 6);
-  const minhas = store.tarefas.filter(t => t.responsavel === pessoa);
-  const semDia = minhas.filter(t => !t.dia && t.status !== 'feito').sort(ordenar);
-  // itens de dias anteriores que ficaram por fazer aparecem em "A programar"
-  const estaSemana = semanaAtual();
-  const atrasadosDia = semana === estaSemana ? minhas.filter(t => t.dia && t.dia < estaSemana && t.status !== 'feito') : [];
-  const naSemana = (iso) => minhas.filter(t => t.dia === iso).sort(ordenar);
-  const domingo = minhas.filter(t => t.dia === fim);
-  const total = dias.reduce((s, d) => s + naSemana(d.iso).length, 0) + domingo.length;
-  const feitos = dias.reduce((s, d) => s + naSemana(d.iso).filter(t => t.status === 'feito').length, 0);
-  const reunioes = dias.reduce((s, d) => s + naSemana(d.iso).filter(t => t.tipo === 'reuniao').length, 0);
+  const minhas = store.tarefas.filter(t => t.responsavel === pessoa && ehPlanejamento(t) && t.dia);
+  const doDia = (iso) => minhas.filter(t => t.dia === iso)
+    .sort((a, b) => (a.tipo === 'reuniao' ? 0 : 1) - (b.tipo === 'reuniao' ? 0 : 1) || String(a.hora || '').localeCompare(String(b.hora || '')));
+  const daSemana = minhas.filter(t => t.dia >= semana && t.dia <= somarDias(semana, 5));
+  const vezes = (pid) => daSemana.filter(t => t.tipo === 'projeto' && t.projeto_id === pid).length;
+  const ativos = store.projetos.filter(p => ['ativo', 'pausado'].includes(p.status))
+    .filter(p => !busca || `${p.nome} ${nomeCliente(p.cliente_id)}`.toLowerCase().includes(busca.toLowerCase()))
+    .sort((a, b) => nomeCliente(a.cliente_id).localeCompare(nomeCliente(b.cliente_id), 'pt-BR'));
+  const nProj = daSemana.filter(t => t.tipo === 'projeto').length;
+  const nReu = daSemana.filter(t => t.tipo === 'reuniao').length;
 
   el.innerHTML = `
     <div class="cab"><div class="titulos"><h1>Programação semanal</h1>
-      <div class="sub">${total ? `${feitos} de ${total} feitos · ${reunioes} reuniõe${reunioes === 1 ? '' : 's'}` : 'Nada programado nesta semana ainda'}</div></div>
+      <div class="sub">${nProj || nReu ? `${nProj} período${nProj === 1 ? '' : 's'} de projeto · ${nReu} ${nReu === 1 ? 'reunião' : 'reuniões'} nesta semana` : 'Arraste os projetos da coluna da esquerda para os dias da semana'}</div></div>
       <div class="acoes">
         <div class="grupo-botoes">${EQUIPE.map(n => `<button data-pessoa="${h(n)}" class="${pessoa === n ? 'ativo' : ''}">${h(n)}</button>`).join('')}</div>
-        <button class="btn btn-primario" data-novo="">${icone('mais', 16)} Programar</button>
       </div></div>
     <div class="nav-mes" style="margin-bottom:12px">
       <button class="btn-icone" data-sem="-7" title="Semana anterior">${icone('voltar', 18)}</button>
@@ -82,23 +103,22 @@ export function render(el) {
     </div>
     <div class="quadro quadro-semana">
       <div class="coluna col-programar" data-dia="">
-        <div class="coluna-cab"><strong>A programar</strong><span class="n">${semDia.length + atrasadosDia.length}</span></div>
-        ${atrasadosDia.length ? `<div class="aviso-col">${atrasadosDia.length} ficou(aram) de dias anteriores</div>${atrasadosDia.sort(ordenar).map(cartao).join('')}` : ''}
-        ${semDia.map(cartao).join('') || (atrasadosDia.length ? '' : '<div class="vazio" style="padding:10px 4px;font-size:.82rem">Tudo programado</div>')}
-        <button class="btn btn-leve add-col" data-novo="">${icone('mais', 14)} Adicionar</button>
+        <div class="coluna-cab"><strong>Projetos</strong><span class="n">${ativos.length}</span></div>
+        <input class="entrada busca-prog" id="busca-prog" placeholder="Buscar…" value="${h(busca)}">
+        ${ativos.map(p => cartaoPaleta(p, vezes(p.id))).join('') || '<div class="vazio" style="padding:10px 4px;font-size:.82rem">Nenhum projeto em andamento</div>'}
       </div>
       ${dias.map(d => {
-        const itens = naSemana(d.iso);
+        const itens = doDia(d.iso);
         const ehHoje = d.iso === hoje();
         return `<div class="coluna ${ehHoje ? 'col-hoje' : ''} ${d.iso < hoje() ? 'col-passado' : ''}" data-dia="${d.iso}">
           <div class="coluna-cab"><strong>${d.nome}</strong><span class="data-col">${curta(d.iso)}${ehHoje ? ' · hoje' : ''}</span><span class="n">${itens.length}</span></div>
-          ${itens.map(cartao).join('')}
-          <button class="btn btn-leve add-col" data-novo="${d.iso}">${icone('mais', 14)} Adicionar</button>
+          ${itens.map(cartaoDia).join('')}
+          <button class="btn btn-leve add-col" data-reuniao="${d.iso}">${icone('mais', 14)} Reunião</button>
         </div>`;
       }).join('')}
-    </div>
-    ${domingo.length ? `<p class="fraco" style="margin-top:8px">Domingo: ${domingo.map(t => h(t.titulo)).join(', ')}</p>` : ''}`;
+    </div>`;
 
+  // pessoa / semana / busca
   el.querySelectorAll('[data-pessoa]').forEach(b => b.addEventListener('click', () => {
     pessoa = b.dataset.pessoa; try { localStorage.setItem('ab_prog_pessoa', pessoa); } catch { /* ignora */ }
     render(el);
@@ -106,26 +126,76 @@ export function render(el) {
   el.querySelectorAll('[data-sem]').forEach(b => b.addEventListener('click', () => {
     semana = b.dataset.sem === 'hoje' ? semanaAtual() : somarDias(semana, Number(b.dataset.sem)); render(el);
   }));
-  el.querySelectorAll('[data-novo]').forEach(b => b.addEventListener('click', () => formTarefa(null, { responsavel: pessoa, dia: b.dataset.novo || null, tipo: 'projeto' })));
-  el.querySelectorAll('[data-prog]').forEach(c => {
-    c.addEventListener('click', e => { if (e.target.closest('[data-feito]')) return; formTarefa(porId('tarefas', c.dataset.prog)); });
-    c.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', c.dataset.prog); c.classList.add('arrastando'); });
-    c.addEventListener('dragend', () => c.classList.remove('arrastando'));
-  });
-  el.querySelectorAll('[data-feito]').forEach(b => b.addEventListener('click', async () => {
+  const bx = el.querySelector('#busca-prog');
+  bx.addEventListener('input', () => { busca = bx.value; render(el); const n = el.querySelector('#busca-prog'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); });
+
+  // ações dos cartões
+  el.querySelectorAll('[data-reuniao]').forEach(b => b.addEventListener('click', () =>
+    formTarefa(null, { responsavel: pessoa, dia: b.dataset.reuniao, tipo: 'reuniao', titulo: '' })));
+  el.querySelectorAll('[data-editar]').forEach(c => c.addEventListener('click', () => formTarefa(porId('tarefas', c.dataset.editar))));
+  el.querySelectorAll('[data-abrir]').forEach(c => c.addEventListener('click', () => nav.ir('projeto/' + c.dataset.abrir)));
+  el.querySelectorAll('[data-feito]').forEach(b => b.addEventListener('click', async e => {
+    e.stopPropagation();
     const t = porId('tarefas', b.dataset.feito);
     await tentar(() => atualizar('tarefas', t.id, { status: t.status === 'feito' ? 'afazer' : 'feito' })); nav.recarregar();
   }));
+  el.querySelectorAll('[data-tirar]').forEach(b => b.addEventListener('click', async e => {
+    e.stopPropagation();
+    await tentar(() => remover('tarefas', b.dataset.tirar)); nav.recarregar();
+  }));
+  el.querySelectorAll('[data-paleta]').forEach(c => c.addEventListener('click', () => escolherDias(porId('projetos', c.dataset.paleta), dias)));
+
+  // arrastar
+  el.querySelectorAll('[data-paleta], [data-item]').forEach(c => {
+    c.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', c.dataset.paleta ? 'p:' + c.dataset.paleta : 'i:' + c.dataset.item);
+      c.classList.add('arrastando');
+    });
+    c.addEventListener('dragend', () => c.classList.remove('arrastando'));
+  });
   el.querySelectorAll('.quadro-semana [data-dia]').forEach(col => {
     col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('soltar'); });
     col.addEventListener('dragleave', e => { if (!col.contains(e.relatedTarget)) col.classList.remove('soltar'); });
     col.addEventListener('drop', async e => {
       e.preventDefault(); col.classList.remove('soltar');
-      const t = porId('tarefas', e.dataTransfer.getData('text/plain'));
+      const [tipo, id] = e.dataTransfer.getData('text/plain').split(':');
       const dia = col.dataset.dia || null;
-      if (!t || (t.dia || null) === dia) return;
-      await tentar(() => atualizar('tarefas', t.id, { dia }));
+      if (tipo === 'p') {               // projeto da lista → novo período no dia (pode repetir)
+        if (!dia) return;
+        await programar(porId('projetos', id), dia);
+      } else {                          // cartão já programado
+        const t = porId('tarefas', id);
+        if (!t) return;
+        if (!dia) { if (t.tipo === 'projeto') await tentar(() => remover('tarefas', t.id)); } // de volta à lista = tira do dia
+        else if (t.dia !== dia) await tentar(() => atualizar('tarefas', t.id, { dia }));
+      }
       nav.recarregar();
     });
+  });
+}
+
+async function programar(p, dia) {
+  if (!p) return;
+  await tentar(() => inserir('tarefas', {
+    tipo: 'projeto', projeto_id: p.id, responsavel: pessoa, dia, titulo: tituloProjeto(p),
+    status: 'afazer', prioridade: 'media', ordem: 0,
+  }));
+}
+
+/** Clique no projeto (bom no celular): escolher um ou mais dias. */
+function escolherDias(p, dias) {
+  if (!p) return;
+  const m = abrirModal({
+    titulo: `Programar: ${p.nome}`, largura: 460,
+    corpo: `<p class="fraco" style="margin-bottom:10px">Em quais dias ${h(pessoa)} vai trabalhar neste projeto?</p>
+      <div class="chips">${dias.map(d => `<button type="button" class="chip" data-d="${d.iso}">${d.nome.slice(0, 3)} ${curta(d.iso)}</button>`).join('')}</div>`,
+    rodape: `<span class="espaco"></span><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>Programar</button>`,
+  });
+  m.el.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => b.classList.toggle('sel')));
+  m.el.querySelector('[data-ok]').addEventListener('click', async () => {
+    const sel = [...m.el.querySelectorAll('[data-d].sel')].map(b => b.dataset.d);
+    if (!sel.length) return aviso('Escolha pelo menos um dia', 'erro');
+    for (const d of sel) await programar(p, d);
+    m.fechar(); nav.recarregar();
   });
 }

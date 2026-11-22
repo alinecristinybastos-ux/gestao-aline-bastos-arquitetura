@@ -1,13 +1,13 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221728';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221728';
-import { EQUIPE } from './config.js?v=202611221728';
-import { abrirRecibo } from './recibo.js?v=202611221728';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221728';
-import { nav } from './nav.js?v=202611221728';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221728';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221734';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221734';
+import { EQUIPE } from './config.js?v=202611221734';
+import { abrirRecibo } from './recibo.js?v=202611221734';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221734';
+import { nav } from './nav.js?v=202611221734';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221734';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -171,7 +171,7 @@ export const TIPOS_TAREFA = { tarefa: 'Tarefa', projeto: 'Trabalhar no projeto',
 
 export function formTarefa(tarefa = null, padrao = {}) {
   const campos = [
-    { nome: 'tipo', rotulo: 'Tipo', tipo: 'select', vazio: false, opcoes: Object.entries(TIPOS_TAREFA), largura: 'meia' },
+    { nome: 'tipo', rotulo: 'Tipo', tipo: 'select', vazio: false, opcoes: Object.entries(TIPOS_TAREFA).filter(([k]) => k !== 'projeto' || tarefa?.tipo === 'projeto'), largura: 'meia' },
     { nome: 'responsavel', rotulo: 'Para quem', tipo: 'select', opcoes: opcoesEquipe(), largura: 'meia' },
     { nome: 'projeto_id', rotulo: 'Projeto', tipo: 'select', opcoes: opcoesProjetos(false), vazio: 'Nenhum (geral)' },
     { nome: 'titulo', rotulo: 'Título', obrigatorio: true, placeholder: 'Ex.: Renderizar 3D da sala; Reunião de apresentação…' },

@@ -476,6 +476,17 @@ tr.saude-vermelho td:first-child { box-shadow: inset 5px 0 0 var(--perigo); }
 .sub-prog { font-size: .76rem; color: var(--texto-2); margin-top: 2px; }
 .meta-prog { margin-top: 5px; }
 
+.cartao-prog.paleta { cursor: grab; }
+.cartao-prog.paleta:active { cursor: grabbing; }
+.cartao-prog { position: relative; }
+.fase-prog { color: var(--verde) !important; display: flex; gap: 3px; align-items: center; }
+.vezes-prog { font-size: .72rem; color: var(--texto-3); margin-top: 4px; }
+.busca-prog { padding: 6px 9px !important; font-size: .84rem !important; margin-bottom: 8px; }
+.tirar-prog { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; opacity: 0; }
+.cartao-prog:hover .tirar-prog { opacity: 1; }
+@media (hover: none) { .tirar-prog { opacity: .7; } }
+.cartao-prog.tipo-projeto .corpo-prog { cursor: pointer; padding-right: 14px; }
+
 /* ---------------------------------------------------------------- modal */
 .modal-fundo { position: fixed; inset: 0; background: rgba(23, 31, 16, .45); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; z-index: 50; overflow-y: auto; animation: aparecer .15s ease-out; }
 .modal { background: var(--papel); border-radius: 14px; width: 100%; box-shadow: var(--sombra-forte); display: flex; flex-direction: column; max-height: 90vh; animation: subir .18s ease-out; }

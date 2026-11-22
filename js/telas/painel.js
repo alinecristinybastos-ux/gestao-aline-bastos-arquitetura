@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js?v=202611221728';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221728';
-import { nav } from '../nav.js?v=202611221728';
-import { ESCRITORIO } from '../config.js?v=202611221728';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas, saudeProjeto } from '../negocio.js?v=202611221728';
-import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221728';
-import { novoProjeto } from './projetos.js?v=202611221728';
+import { store, porId } from '../dados.js?v=202611221734';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221734';
+import { nav } from '../nav.js?v=202611221734';
+import { ESCRITORIO } from '../config.js?v=202611221734';
+import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas, saudeProjeto } from '../negocio.js?v=202611221734';
+import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221734';
+import { novoProjeto } from './projetos.js?v=202611221734';
 
 function saudacao() {
   const hr = new Date().getHours();
@@ -24,7 +24,7 @@ function proximosPrazos() {
   store.complementares.filter(c => c.status !== 'entregue' && c.prazo && diasAte(c.prazo) <= LIMITE).forEach(c => {
     lista.push({ data: c.prazo, tit: `${c.disciplina} — ${nomeParceiro(c.parceiro_id)}`, sub: porId('projetos', c.projeto_id)?.nome || '', tipo: 'Parceiro', ir: `projeto/${c.projeto_id}/complementares` });
   });
-  store.tarefas.filter(t => t.status !== 'feito' && t.prazo && diasAte(t.prazo) <= LIMITE).forEach(t => {
+  store.tarefas.filter(t => t.status !== 'feito' && t.tipo !== 'projeto' && t.prazo && diasAte(t.prazo) <= LIMITE).forEach(t => {
     lista.push({ data: t.prazo, tit: t.titulo, sub: `${t.responsavel || ''}${t.projeto_id ? ' · ' + (porId('projetos', t.projeto_id)?.nome || '') : ''}`, tipo: 'Tarefa', ir: 'tarefas' });
   });
   store.despesas.filter(x => !x.pago && x.vencimento && diasAte(x.vencimento) <= 7).forEach(x => {
@@ -49,7 +49,7 @@ export function render(el) {
   const mes = hoje().slice(0, 7);
   const recebidoMes = store.recebimentos.filter(r => r.status === 'pago' && (r.pago_em || '').startsWith(mes)).reduce((s, r) => s + Number(r.valor || 0), 0);
   const aReceber = store.recebimentos.filter(r => r.status !== 'pago' && porId('projetos', r.projeto_id)?.status !== 'cancelado').reduce((s, r) => s + Number(r.valor || 0), 0);
-  const tarefasAbertas = store.tarefas.filter(t => t.status !== 'feito');
+  const tarefasAbertas = store.tarefas.filter(t => t.status !== 'feito' && t.tipo !== 'projeto');
   const tarefasAtrasadas = tarefasAbertas.filter(t => t.prazo && diasAte(t.prazo) < 0).length;
   const complAtras = store.complementares.filter(complAtrasado).length;
   const prazos = proximosPrazos();

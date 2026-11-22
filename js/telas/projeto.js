@@ -2,21 +2,21 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221728';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221728';
-import { nav } from '../nav.js?v=202611221728';
-import { EQUIPE } from '../config.js?v=202611221728';
-import { CATEGORIAS, TIPOS, intervencoesDa, infoServico } from '../modelos.js?v=202611221728';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221734';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221734';
+import { nav } from '../nav.js?v=202611221734';
+import { EQUIPE } from '../config.js?v=202611221734';
+import { CATEGORIAS, TIPOS, intervencoesDa, infoServico } from '../modelos.js?v=202611221734';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento, esperaComplementares, nomeParceiro, complAtrasado, STATUS_COMPL, pendenciasAbertas,
-} from '../negocio.js?v=202611221728';
+} from '../negocio.js?v=202611221734';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
   ligarLinhasComplementares, formComplementaresContratados, formServicosContratados, formServico, formRegistroServico, STATUS_SERV, formPendencia, linhaPendencia, ligarPendencias, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221728';
-import { botaoRecibo, ligarRecibos } from '../recibo.js?v=202611221728';
-import { STATUS_PROJ } from './projetos.js?v=202611221728';
+} from '../componentes.js?v=202611221734';
+import { botaoRecibo, ligarRecibos } from '../recibo.js?v=202611221734';
+import { STATUS_PROJ } from './projetos.js?v=202611221734';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -36,7 +36,7 @@ export function render(el, [id, aba]) {
   const cli = porId('clientes', p.cliente_id);
   const nCompl = store.complementares.filter(c => c.projeto_id === id).length;
   const nServ = store.servicos.filter(x => x.projeto_id === id && x.status !== 'concluido').length;
-  const nTar = store.tarefas.filter(t => t.projeto_id === id && t.status !== 'feito').length;
+  const nTar = store.tarefas.filter(t => t.projeto_id === id && t.status !== 'feito' && t.tipo !== 'projeto').length;
   const cobrar = recebimentosDo(id).filter(r => ['liberado', 'atrasado'].includes(situacaoRecebimento(r).cod)).length;
 
   el.innerHTML = `
@@ -483,7 +483,7 @@ function abaServicos(area, p) {
 //  ABA TAREFAS
 // =====================================================================
 function abaTarefas(area, p) {
-  const lista = store.tarefas.filter(t => t.projeto_id === p.id)
+  const lista = store.tarefas.filter(t => t.projeto_id === p.id && t.tipo !== 'projeto')
     .sort((a, b) => (a.status === 'feito') - (b.status === 'feito') || String(a.prazo || '9').localeCompare(String(b.prazo || '9')));
   area.innerHTML = `<div class="cartao">
     <div class="cartao-cab"><h2>Tarefas da equipe neste projeto</h2><button class="btn btn-peq btn-primario" id="add-tar">${icone('mais', 14)} Tarefa</button></div>

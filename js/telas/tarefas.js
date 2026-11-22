@@ -2,11 +2,11 @@
 //  TAREFAS DA EQUIPE — quadro (A fazer / Fazendo / Feito)
 //  Arraste os cartões entre as colunas.
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221728';
-import { h, icone, tentar, diasAte } from '../util.js?v=202611221728';
-import { nav } from '../nav.js?v=202611221728';
-import { EQUIPE } from '../config.js?v=202611221728';
-import { formTarefa, avatar, tagPrazo, rotuloProjeto } from '../componentes.js?v=202611221728';
+import { store, porId, atualizar } from '../dados.js?v=202611221734';
+import { h, icone, tentar, diasAte } from '../util.js?v=202611221734';
+import { nav } from '../nav.js?v=202611221734';
+import { EQUIPE } from '../config.js?v=202611221734';
+import { formTarefa, avatar, tagPrazo, rotuloProjeto } from '../componentes.js?v=202611221734';
 
 const COLUNAS = [['afazer', 'A fazer'], ['fazendo', 'Fazendo'], ['feito', 'Feito']];
 let pessoa = '';
@@ -24,9 +24,9 @@ function cartao(t) {
 }
 
 export function render(el) {
-  const lista = store.tarefas.filter(t => (!pessoa || t.responsavel === pessoa) && (!projetoFiltro || t.projeto_id === projetoFiltro));
+  const lista = store.tarefas.filter(t => t.tipo !== 'projeto' && (!pessoa || t.responsavel === pessoa) && (!projetoFiltro || t.projeto_id === projetoFiltro));
   const atrasadas = lista.filter(t => t.status !== 'feito' && t.prazo && diasAte(t.prazo) < 0).length;
-  const projetosComTarefa = [...new Set(store.tarefas.map(t => t.projeto_id).filter(Boolean))].map(id => porId('projetos', id)).filter(Boolean);
+  const projetosComTarefa = [...new Set(store.tarefas.filter(t => t.tipo !== 'projeto').map(t => t.projeto_id).filter(Boolean))].map(id => porId('projetos', id)).filter(Boolean);
 
   el.innerHTML = `
     <div class="cab"><div class="titulos"><h1>Tarefas da equipe</h1>
