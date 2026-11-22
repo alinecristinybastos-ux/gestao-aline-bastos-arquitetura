@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221438';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221438';
-import { EQUIPE } from './config.js?v=202611221438';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221438';
-import { nav } from './nav.js?v=202611221438';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221438';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221439';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221439';
+import { EQUIPE } from './config.js?v=202611221439';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221439';
+import { nav } from './nav.js?v=202611221439';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221439';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -403,29 +403,21 @@ export const CATEGORIAS_DESPESA = [
 // repetição das despesas fixas: quantos lançamentos são criados de uma vez
 const REPETICOES = {
   nao: { rotulo: 'Não repete' },
-  semanal: { rotulo: 'Vence toda semana (cria 1 ano)', aviso: 'toda semana pelos próximos 12 meses' },
-  quinzenal: { rotulo: 'Vence toda quinzena (cria 1 ano)', aviso: 'a cada 15 dias pelos próximos 12 meses' },
-  mensal: { rotulo: 'Vence todo mês (cria 12 meses)', aviso: 'todo mês pelos próximos 12 meses' },
-  anual: { rotulo: 'Vence todo ano (cria 5 anos)', aviso: 'todo ano pelos próximos 5 anos' },
+  semanal: { rotulo: 'Vence toda semana (cria 1 ano)', aviso: 'a cada 7 dias, a partir do vencimento, por 1 ano' },
+  quinzenal: { rotulo: 'Vence a cada 15 dias (cria 1 ano)', aviso: 'a cada 15 dias, a partir do vencimento, por 1 ano' },
+  mensal: { rotulo: 'Vence todo mês (cria 12 meses)', aviso: 'todo mês no mesmo dia, a partir do vencimento, por 12 meses' },
+  anual: { rotulo: 'Vence todo ano (cria 5 anos)', aviso: 'todo ano na mesma data, a partir do vencimento, por 5 anos' },
 };
 
-/** Datas de vencimento da série. Quinzena: no dia escolhido e 15 dias depois, todo mês. */
+/** Datas de vencimento da série, sempre contadas a partir do vencimento informado
+ *  (semana = +7 dias, quinzena = +15 dias, mês = mesmo dia nos meses seguintes, ano = mesma data). */
 function datasRepeticao(inicio, tipo) {
   const [a, m, d] = inicio.split('-').map(Number);
   const iso = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
   const noMes = (ano, mes, dia) => new Date(ano, mes, Math.min(dia, new Date(ano, mes + 1, 0).getDate()));
   if (tipo === 'semanal') return Array.from({ length: 52 }, (_, i) => iso(new Date(a, m - 1, d + 7 * i)));
   if (tipo === 'anual') return Array.from({ length: 5 }, (_, i) => iso(noMes(a + i, m - 1, d)));
-  if (tipo === 'quinzenal') {
-    const d2 = d + 15 > 28 ? d - 15 : d + 15; // segunda data da quinzena no mesmo mês
-    const out = [];
-    for (let i = 0; i < 12; i++) {
-      out.push(iso(noMes(a, m - 1 + i, d)));
-      const seg = noMes(a, m - 1 + i + (d2 < d ? 1 : 0), d2);
-      out.push(iso(seg));
-    }
-    return out.sort();
-  }
+  if (tipo === 'quinzenal') return Array.from({ length: 24 }, (_, i) => iso(new Date(a, m - 1, d + 15 * i)));
   return Array.from({ length: 12 }, (_, i) => iso(noMes(a, m - 1 + i, d)));
 }
 
