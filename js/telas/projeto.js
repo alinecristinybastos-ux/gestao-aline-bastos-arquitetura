@@ -2,20 +2,20 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221235';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221235';
-import { nav } from '../nav.js?v=202611221235';
-import { EQUIPE } from '../config.js?v=202611221235';
-import { CATEGORIAS } from '../modelos.js?v=202611221235';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221305';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221305';
+import { nav } from '../nav.js?v=202611221305';
+import { EQUIPE } from '../config.js?v=202611221305';
+import { CATEGORIAS } from '../modelos.js?v=202611221305';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento,
-} from '../negocio.js?v=202611221235';
+} from '../negocio.js?v=202611221305';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
-  ligarLinhasComplementares, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe,
-} from '../componentes.js?v=202611221235';
-import { STATUS_PROJ } from './projetos.js?v=202611221235';
+  ligarLinhasComplementares, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe,
+} from '../componentes.js?v=202611221305';
+import { STATUS_PROJ } from './projetos.js?v=202611221305';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -45,7 +45,7 @@ export function render(el, [id, aba]) {
         <div class="cod">${h(p.codigo || '')} · ${h(descricaoTipo(p))}</div>
         <h1>${h(p.nome)}</h1>
         <div class="linha-info">
-          <span>${icone('clientes', 15)} ${cli ? `<a href="#/cliente/${cli.id}">${h(cli.nome)}</a>` : 'Sem cliente'}</span>
+          <span>${icone('clientes', 15)} ${cli ? `<a href="#/cliente/${cli.id}">${h(cli.nome)}</a>` : 'Sem cliente'}${responsaveisDe(cli).length ? ` · resp.: ${responsaveisDe(cli).map(r => h(r.nome)).join(', ')}` : ''}</span>
           ${p.endereco_obra ? `<span>${icone('projetos', 15)} ${h(p.endereco_obra)}</span>` : ''}
           ${p.area_m2 ? `<span>${h(p.area_m2)} m²</span>` : ''}
           <span>${icone('calendario', 15)} entrega prevista ${data(p.data_prevista)}</span>

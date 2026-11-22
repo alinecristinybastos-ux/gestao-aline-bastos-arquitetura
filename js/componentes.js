@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221235';
-import { h, icone, formModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221235';
-import { EQUIPE } from './config.js?v=202611221235';
-import { DISCIPLINAS } from './modelos.js?v=202611221235';
-import { nav } from './nav.js?v=202611221235';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js?v=202611221235';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221305';
+import { h, icone, formModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221305';
+import { EQUIPE } from './config.js?v=202611221305';
+import { DISCIPLINAS } from './modelos.js?v=202611221305';
+import { nav } from './nav.js?v=202611221305';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js?v=202611221305';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -25,21 +25,42 @@ export function tagPrazo(iso, concluido) {
 }
 
 // ---------------------------------------------------------------- cliente
+export const ehPJ = (c) => c?.tipo_pessoa === 'juridica';
+export const responsaveisDe = (c) => (Array.isArray(c?.responsaveis) ? c.responsaveis : []).filter(r => r && r.nome);
+
+function linhaResponsavel(r = {}) {
+  return `<div class="resp-linha">
+    <input class="entrada" data-resp="nome" placeholder="Nome do responsável *" value="${h(r.nome || '')}">
+    <input class="entrada" data-resp="cargo" placeholder="Cargo / função" value="${h(r.cargo || '')}">
+    <input class="entrada" data-resp="telefone" type="tel" placeholder="Telefone / WhatsApp" value="${h(r.telefone || '')}">
+    <input class="entrada" data-resp="email" type="email" placeholder="E-mail" value="${h(r.email || '')}">
+    <button type="button" class="btn-icone" data-rm-resp title="Remover responsável">${icone('lixo', 15)}</button>
+  </div>`;
+}
+
 export function formCliente(cliente = null, aoSalvar) {
   const campos = [
-    { nome: 'nome', rotulo: 'Nome completo / Razão social', obrigatorio: true },
-    { nome: 'documento', rotulo: 'CPF / CNPJ', largura: 'meia' },
+    { nome: 'tipo_pessoa', rotulo: 'Tipo de cliente', tipo: 'select', vazio: false, largura: 'meia',
+      opcoes: [['fisica', 'Pessoa física'], ['juridica', 'Pessoa jurídica (empresa)']] },
+    { nome: 'documento', rotulo: 'CPF', largura: 'meia' },
+    { nome: 'nome', rotulo: 'Nome completo', obrigatorio: true },
     { nome: 'telefone', rotulo: 'Telefone / WhatsApp', largura: 'meia', tipo: 'tel' },
     { nome: 'email', rotulo: 'E-mail', largura: 'meia', tipo: 'email' },
     { nome: 'aniversario', rotulo: 'Aniversário', largura: 'meia', tipo: 'date' },
     { nome: 'endereco', rotulo: 'Endereço', largura: 'meia' },
     { nome: 'cidade', rotulo: 'Cidade', largura: 'meia' },
-    { nome: 'origem', rotulo: 'Como chegou ao escritório', tipo: 'select', opcoes: ['Indicação', 'Instagram', 'Google', 'Site', 'Cliente antigo', 'Construtora parceira', 'Outro'].map(o => [o, o]) },
+    { nome: 'origem', rotulo: 'Como chegou ao escritório', tipo: 'select', opcoes: ['Indicação', 'Instagram', 'Google', 'Site', 'Cliente antigo', 'Construtora parceira', 'Outro'].map(o => [o, o]), largura: 'meia' },
     { nome: 'observacoes', rotulo: 'Observações', tipo: 'textarea' },
   ];
-  formModal({
-    titulo: cliente ? 'Editar cliente' : 'Novo cliente', campos, valores: cliente || {},
-    onSalvar: async (d) => {
+  const m = formModal({
+    titulo: cliente ? 'Editar cliente' : 'Novo cliente', campos, largura: 680,
+    valores: { tipo_pessoa: 'fisica', ...(cliente || {}) },
+    onSalvar: async (d, modal) => {
+      const pj = d.tipo_pessoa === 'juridica';
+      d.responsaveis = pj ? [...modal.el.querySelectorAll('.resp-linha')].map(l => Object.fromEntries(
+        [...l.querySelectorAll('[data-resp]')].map(i => [i.dataset.resp, i.value.trim()]))).filter(r => r.nome) : [];
+      if (pj && !d.responsaveis.length) throw new Error('Informe pelo menos um responsável pelo projeto');
+      if (pj) d.aniversario = null;
       let c;
       if (cliente) c = await atualizar('clientes', cliente.id, d);
       else [c] = await inserir('clientes', d);
@@ -47,6 +68,37 @@ export function formCliente(cliente = null, aoSalvar) {
       aoSalvar ? aoSalvar(c) : nav.recarregar();
     },
   });
+
+  // bloco de responsáveis (só para pessoa jurídica)
+  const form = m.el.querySelector('form');
+  const bloco = document.createElement('div');
+  bloco.className = 'campo bloco-resp';
+  bloco.innerHTML = `<div class="secao-form" style="grid-column:auto">Responsáveis pelo projeto na empresa</div>
+    <small>Quem decide e acompanha o projeto. Pode incluir mais de um.</small>
+    <div class="lista-resp">${responsaveisDe(cliente).map(linhaResponsavel).join('')}</div>
+    <button type="button" class="btn btn-peq" data-add-resp style="align-self:flex-start">${icone('mais', 14)} Adicionar responsável</button>`;
+  form.insertBefore(bloco, form.elements.telefone.closest('.campo'));
+  const lista = bloco.querySelector('.lista-resp');
+  const ligarRemover = () => lista.querySelectorAll('[data-rm-resp]').forEach(b => { b.onclick = () => { b.closest('.resp-linha').remove(); }; });
+  bloco.querySelector('[data-add-resp]').addEventListener('click', () => {
+    lista.insertAdjacentHTML('beforeend', linhaResponsavel()); ligarRemover();
+    lista.lastElementChild.querySelector('input').focus();
+  });
+  ligarRemover();
+
+  const rotulo = (nome, txt) => { form.elements[nome].closest('.campo').querySelector('label').firstChild.textContent = txt; };
+  const alternar = () => {
+    const pj = form.elements.tipo_pessoa.value === 'juridica';
+    bloco.classList.toggle('oculto', !pj);
+    rotulo('nome', pj ? 'Razão social / nome da empresa' : 'Nome completo');
+    rotulo('documento', pj ? 'CNPJ' : 'CPF');
+    rotulo('telefone', pj ? 'Telefone da empresa' : 'Telefone / WhatsApp');
+    rotulo('email', pj ? 'E-mail da empresa' : 'E-mail');
+    form.elements.aniversario.closest('.campo').classList.toggle('oculto', pj);
+    if (pj && !lista.children.length) { lista.insertAdjacentHTML('beforeend', linhaResponsavel()); ligarRemover(); }
+  };
+  form.elements.tipo_pessoa.addEventListener('change', alternar);
+  alternar();
 }
 
 // ---------------------------------------------------------------- parceiro

@@ -1,19 +1,19 @@
 // =====================================================================
 //  CLIENTES — lista e ficha do cliente
 // =====================================================================
-import { store, porId, remover } from '../dados.js?v=202611221235';
-import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221235';
-import { nav } from '../nav.js?v=202611221235';
-import { recebimentosDo } from '../negocio.js?v=202611221235';
-import { formCliente, blocoAnexos, ligarBlocoAnexos } from '../componentes.js?v=202611221235';
-import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221235';
+import { store, porId, remover } from '../dados.js?v=202611221305';
+import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221305';
+import { nav } from '../nav.js?v=202611221305';
+import { recebimentosDo } from '../negocio.js?v=202611221305';
+import { formCliente, blocoAnexos, ligarBlocoAnexos, ehPJ, responsaveisDe } from '../componentes.js?v=202611221305';
+import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221305';
 
 let busca = '';
 
 export function render(el, params, rota) {
   if (rota === 'cliente') return ficha(el, params[0]);
   const lista = store.clientes
-    .filter(c => !busca || `${c.nome} ${c.telefone} ${c.email} ${c.cidade}`.toLowerCase().includes(busca.toLowerCase()))
+    .filter(c => !busca || `${c.nome} ${c.telefone} ${c.email} ${c.cidade} ${responsaveisDe(c).map(r => r.nome).join(' ')}`.toLowerCase().includes(busca.toLowerCase()))
     .sort((a, b) => a.nome.localeCompare(b.nome));
   el.innerHTML = `
     <div class="cab"><div class="titulos"><h1>Clientes</h1><div class="sub">${store.clientes.length} cadastrado${store.clientes.length === 1 ? '' : 's'}</div></div>
@@ -24,8 +24,10 @@ export function render(el, params, rota) {
       <tbody>${lista.map(c => {
         const ps = store.projetos.filter(p => p.cliente_id === c.id);
         const ativos = ps.filter(p => p.status === 'ativo').length;
-        return `<tr class="clicavel" data-cli="${c.id}"><td>${h(c.nome)}${c.origem ? `<div class="fraco">${h(c.origem)}</div>` : ''}</td>
-          <td><div>${h(c.telefone || '')}</div><div class="fraco">${h(c.email || '')}</div></td>
+        const resp = responsaveisDe(c);
+        return `<tr class="clicavel" data-cli="${c.id}"><td>${h(c.nome)} ${ehPJ(c) ? '<span class="tag tag-areia">Empresa</span>' : ''}${c.origem ? `<div class="fraco">${h(c.origem)}</div>` : ''}</td>
+          <td>${resp.length ? `<div>${h(resp[0].nome)}${resp.length > 1 ? ` <span class="fraco">+${resp.length - 1}</span>` : ''}</div><div class="fraco">${h(resp[0].telefone || c.telefone || '')}</div>`
+            : `<div>${h(c.telefone || '')}</div><div class="fraco">${h(c.email || '')}</div>`}</td>
           <td>${h(c.cidade || '')}</td>
           <td>${ps.length ? `${ps.length}${ativos ? ` <span class="tag tag-verde">${ativos} em andamento</span>` : ''}` : '<span class="fraco">—</span>'}</td>
           <td class="num">${moeda(ps.reduce((s, p) => s + Number(p.valor_contrato || 0), 0))}</td></tr>`;
@@ -44,11 +46,11 @@ function ficha(el, id) {
   const recs = ps.flatMap(p => recebimentosDo(p.id));
   const total = recs.reduce((s, r) => s + Number(r.valor || 0), 0);
   const pago = recs.filter(r => r.status === 'pago').reduce((s, r) => s + Number(r.valor || 0), 0);
-  const zap = (c.telefone || '').replace(/\D/g, '');
+  const zap = (c.telefone || responsaveisDe(c)[0]?.telefone || '').replace(/\D/g, '');
   el.innerHTML = `
     <a class="migalha" href="#/clientes">${icone('voltar', 15)} Clientes</a>
     <div class="cab"><div class="titulos"><h1>${h(c.nome)}</h1>
-      <div class="sub">${[c.documento, c.cidade, c.origem && 'via ' + c.origem].filter(Boolean).map(h).join(' · ')}</div></div>
+      <div class="sub">${[ehPJ(c) ? 'Pessoa jurídica' : 'Pessoa física', c.documento && (ehPJ(c) ? 'CNPJ ' : 'CPF ') + c.documento, c.cidade, c.origem && 'via ' + c.origem].filter(Boolean).map(h).join(' · ')}</div></div>
       <div class="acoes">
         ${zap ? `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${zap.length <= 11 ? '55' + zap : zap}">WhatsApp</a>` : ''}
         <button class="btn" id="ed-cli">${icone('editar', 15)} Editar</button>
@@ -58,16 +60,22 @@ function ficha(el, id) {
         <div class="cartao"><div class="cartao-cab"><h2>Projetos</h2></div>
           <div class="cartao-corpo">${ps.length ? `<div class="grade grade-2">${ps.map(cartaoProjeto).join('')}</div>` : '<div class="vazio">Nenhum projeto ainda.</div>'}</div></div>
         ${orcs.length ? `<div class="cartao"><div class="cartao-cab"><h2>Orçamentos</h2></div><table class="tabela"><tbody>${orcs.map(o => `<tr><td>${h(o.numero || '')} ${h(o.descricao || '')}</td><td>${data(o.data)}</td><td class="num">${moeda(o.valor)}</td><td>${h(o.status)}</td></tr>`).join('')}</tbody></table></div>` : ''}
-        <div class="cartao cartao-corpo"><h2 style="font-weight:400;font-size:1.05rem;color:var(--verde-escuro);margin-bottom:12px">Documentos do cliente</h2>
-          ${blocoAnexos('cliente', id, { titulo: 'este cliente', categorias: ['Documento pessoal', 'Matrícula / escritura', 'IPTU', 'Projeto aprovado', 'Outro'] })}</div>
+        <div class="cartao cartao-corpo"><h2 style="font-weight:400;font-size:1.05rem;color:var(--verde-escuro);margin-bottom:12px">${ehPJ(c) ? 'Documentos da empresa' : 'Documentos do cliente'}</h2>
+          ${blocoAnexos('cliente', id, { titulo: 'este cliente', categorias: ehPJ(c) ? ['Contrato social', 'Cartão CNPJ', 'Documento do responsável', 'Matrícula / escritura', 'IPTU', 'Alvará / licenças', 'Projeto aprovado', 'Outro'] : ['Documento pessoal', 'Matrícula / escritura', 'IPTU', 'Projeto aprovado', 'Outro'] })}</div>
       </div>
       <div class="grade">
+        ${ehPJ(c) ? `<div class="cartao"><div class="cartao-cab"><h2>Responsáveis pelo projeto</h2><button class="btn btn-peq btn-leve" data-ed-resp>${icone('editar', 14)}</button></div>
+          ${responsaveisDe(c).length ? `<ul class="resp-lista">${responsaveisDe(c).map(r => {
+            const z = (r.telefone || '').replace(/\D/g, '');
+            return `<li><div>${h(r.nome)}${r.cargo ? ` <small>· ${h(r.cargo)}</small>` : ''}</div>
+              <small>${[r.telefone && (z ? `<a target="_blank" rel="noopener" href="https://wa.me/${z.length <= 11 ? '55' + z : z}">${h(r.telefone)}</a>` : h(r.telefone)), r.email && `<a href="mailto:${h(r.email)}">${h(r.email)}</a>`].filter(Boolean).join(' · ')}</small></li>`;
+          }).join('')}</ul>` : '<div class="vazio">Nenhum responsável informado.</div>'}</div>` : ''}
         <div class="cartao"><div class="cartao-cab"><h2>Contato</h2></div>
           <table class="tabela"><tbody>
-            <tr><td class="fraco">Telefone</td><td>${h(c.telefone || '—')}</td></tr>
+            <tr><td class="fraco">${ehPJ(c) ? 'Telefone da empresa' : 'Telefone'}</td><td>${h(c.telefone || '—')}</td></tr>
             <tr><td class="fraco">E-mail</td><td>${c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : '—'}</td></tr>
             <tr><td class="fraco">Endereço</td><td>${h(c.endereco || '—')}</td></tr>
-            <tr><td class="fraco">Aniversário</td><td>${data(c.aniversario)}</td></tr>
+            ${ehPJ(c) ? '' : `<tr><td class="fraco">Aniversário</td><td>${data(c.aniversario)}</td></tr>`}
             <tr><td class="fraco">Observações</td><td>${h(c.observacoes || '—')}</td></tr>
           </tbody></table></div>
         <div class="cartao"><div class="cartao-cab"><h2>Financeiro</h2></div>
@@ -80,6 +88,7 @@ function ficha(el, id) {
       </div>
     </div>`;
   el.querySelector('#ed-cli').addEventListener('click', () => formCliente(c));
+  el.querySelector('[data-ed-resp]')?.addEventListener('click', () => formCliente(c));
   el.querySelector('#np-cli').addEventListener('click', () => novoProjeto({ cliente_id: id, nome: `Projeto ${c.nome.split(' ')[0]}` }));
   el.querySelector('#rm-cli').addEventListener('click', async () => {
     if (ps.length) return confirmar('Este cliente tem projetos. Exclua ou transfira os projetos antes.', { ok: 'Entendi' });

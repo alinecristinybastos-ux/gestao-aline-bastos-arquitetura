@@ -4,7 +4,7 @@
 //  - Sem configuração: modo demonstração (localStorage deste navegador)
 //  Todas as tabelas ficam em memória em `store` para as telas lerem.
 // =====================================================================
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221235';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221305';
 
 export const TABELAS = ['clientes', 'projetos', 'etapas', 'itens', 'recebimentos',
   'orcamentos', 'parceiros', 'complementares', 'tarefas', 'anexos'];
@@ -57,6 +57,13 @@ export async function carregarTudo() {
 export const porId = (tabela, id) => store[tabela].find(r => r.id === id);
 
 // ---------------------------------------------------------------- escrita
+function erroBanco(error) {
+  if (/column|schema cache/i.test(error.message)) {
+    return new Error('O banco precisa de uma atualização (falta uma coluna). Rode o SQL de atualização no Supabase e tente de novo.');
+  }
+  return new Error(error.message);
+}
+
 function limpar(obj) {
   const o = {};
   for (const [k, v] of Object.entries(obj)) o[k] = v === '' ? null : v;
@@ -76,7 +83,7 @@ export async function inserir(tabela, dados) {
   const salvos = [];
   for (let i = 0; i < lista.length; i += 400) {
     const { data, error } = await sb.from(tabela).insert(lista.slice(i, i + 400)).select();
-    if (error) throw new Error(error.message);
+    if (error) throw erroBanco(error);
     salvos.push(...data);
   }
   store[tabela].push(...salvos);
@@ -87,7 +94,7 @@ export async function atualizar(tabela, id, patch) {
   patch = limpar(patch);
   if (!modoDemo) {
     const { error } = await sb.from(tabela).update(patch).eq('id', id);
-    if (error) throw new Error(error.message);
+    if (error) throw erroBanco(error);
   }
   const r = porId(tabela, id);
   if (r) Object.assign(r, patch);

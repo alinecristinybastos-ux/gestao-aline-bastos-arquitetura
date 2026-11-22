@@ -1,11 +1,11 @@
 // =====================================================================
 //  PARCEIROS — engenheiros dos projetos complementares
 // =====================================================================
-import { store, porId, remover } from '../dados.js?v=202611221235';
-import { h, icone, moeda, confirmar, tentar } from '../util.js?v=202611221235';
-import { nav } from '../nav.js?v=202611221235';
-import { complAtrasado } from '../negocio.js?v=202611221235';
-import { formParceiro, formComplementar, linhaComplementar, ligarLinhasComplementares, iniciais } from '../componentes.js?v=202611221235';
+import { store, porId, remover } from '../dados.js?v=202611221305';
+import { h, icone, moeda, confirmar, tentar } from '../util.js?v=202611221305';
+import { nav } from '../nav.js?v=202611221305';
+import { complAtrasado } from '../negocio.js?v=202611221305';
+import { formParceiro, formComplementar, linhaComplementar, ligarLinhasComplementares, iniciais } from '../componentes.js?v=202611221305';
 
 let filtroSit = 'abertos';
 

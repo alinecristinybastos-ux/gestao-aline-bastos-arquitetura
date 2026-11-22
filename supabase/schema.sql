@@ -9,8 +9,10 @@ create extension if not exists "pgcrypto";
 -- ---------- CLIENTES ----------
 create table if not exists clientes (
   id uuid primary key default gen_random_uuid(),
-  nome text not null,
+  tipo_pessoa text default 'fisica', -- fisica | juridica
+  nome text not null,        -- nome completo ou razão social
   documento text,            -- CPF / CNPJ
+  responsaveis jsonb default '[]'::jsonb, -- empresa: [{nome, cargo, telefone, email}]
   telefone text,
   email text,
   endereco text,
@@ -20,6 +22,10 @@ create table if not exists clientes (
   observacoes text,
   criado_em timestamptz default now()
 );
+
+-- atualização (para bancos criados antes): tipo de pessoa e responsáveis
+alter table clientes add column if not exists tipo_pessoa text default 'fisica';
+alter table clientes add column if not exists responsaveis jsonb default '[]'::jsonb;
 
 -- ---------- PROJETOS ----------
 create table if not exists projetos (
