@@ -5,12 +5,12 @@
 //  ir para vários dias. Reuniões podem ser marcadas em cada dia.
 //  Cada dia programado é um registro em "tarefas" com tipo 'projeto'.
 // =====================================================================
-import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221736';
-import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221736';
-import { nav } from '../nav.js?v=202611221736';
-import { EQUIPE } from '../config.js?v=202611221736';
-import { formTarefa } from '../componentes.js?v=202611221736';
-import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas } from '../negocio.js?v=202611221736';
+import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221737';
+import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221737';
+import { nav } from '../nav.js?v=202611221737';
+import { EQUIPE } from '../config.js?v=202611221737';
+import { formTarefa } from '../componentes.js?v=202611221737';
+import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas, aguardandoParceiros } from '../negocio.js?v=202611221737';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -87,9 +87,12 @@ export function render(el) {
   const emAndamento = store.projetos.filter(p => ['ativo', 'pausado'].includes(p.status))
     .filter(p => !busca || `${p.nome} ${nomeCliente(p.cliente_id)}`.toLowerCase().includes(busca.toLowerCase()))
     .sort((a, b) => nomeCliente(a.cliente_id).localeCompare(nomeCliente(b.cliente_id), 'pt-BR'));
-  // projetos parados esperando o cliente não entram na lista para programar
-  const aguardando = emAndamento.filter(p => pendenciasAbertas(p.id).length);
-  const ativos = emAndamento.filter(p => !pendenciasAbertas(p.id).length);
+  // projetos parados (esperando o cliente ou os parceiros) não entram na lista para programar
+  const parado = (p) => pendenciasAbertas(p.id).length > 0 || !!aguardandoParceiros(p.id);
+  const aguardando = emAndamento.filter(parado);
+  const ativos = emAndamento.filter(p => !parado(p));
+  const nCli = aguardando.filter(p => pendenciasAbertas(p.id).length).length;
+  const nParc = aguardando.filter(p => !pendenciasAbertas(p.id).length).length;
   const nProj = daSemana.filter(t => t.tipo === 'projeto').length;
   const nReu = daSemana.filter(t => t.tipo === 'reuniao').length;
 
@@ -110,7 +113,7 @@ export function render(el) {
         <div class="coluna-cab"><strong>Projetos</strong><span class="n">${ativos.length}</span></div>
         <input class="entrada busca-prog" id="busca-prog" placeholder="Buscar…" value="${h(busca)}">
         ${ativos.map(p => cartaoPaleta(p, vezes(p.id))).join('') || '<div class="vazio" style="padding:10px 4px;font-size:.82rem">Nenhum projeto para programar</div>'}
-        ${aguardando.length ? `<button class="btn btn-leve aguard-prog" data-aguard>${icone('alerta', 13)} ${aguardando.length} aguardando cliente ${mostrarAguardando ? '· ocultar' : '· mostrar'}</button>
+        ${aguardando.length ? `<button class="btn btn-leve aguard-prog" data-aguard>${icone('alerta', 13)} ${[nCli && `${nCli} aguardando cliente`, nParc && `${nParc} aguardando parceiro${nParc > 1 ? 's' : ''}`].filter(Boolean).join(' · ')} ${mostrarAguardando ? '· ocultar' : '· mostrar'}</button>
           ${mostrarAguardando ? `<div class="lista-aguard">${aguardando.map(p => cartaoPaleta(p, vezes(p.id))).join('')}</div>` : ''}` : ''}
       </div>
       ${dias.map(d => {
