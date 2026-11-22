@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js';
-import { nav } from '../nav.js';
-import { ESCRITORIO } from '../config.js';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro } from '../negocio.js';
-import { tagPrazo, tagRecebimento, marcarRecebido } from '../componentes.js';
-import { novoProjeto } from './projetos.js';
+import { store, porId } from '../dados.js?v=202611221235';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221235';
+import { nav } from '../nav.js?v=202611221235';
+import { ESCRITORIO } from '../config.js?v=202611221235';
+import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro } from '../negocio.js?v=202611221235';
+import { tagPrazo, tagRecebimento, marcarRecebido } from '../componentes.js?v=202611221235';
+import { novoProjeto } from './projetos.js?v=202611221235';
 
 function saudacao() {
   const hr = new Date().getHours();

@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js';
-import { h, icone, formModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js';
-import { EQUIPE } from './config.js';
-import { DISCIPLINAS } from './modelos.js';
-import { nav } from './nav.js';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221235';
+import { h, icone, formModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221235';
+import { EQUIPE } from './config.js?v=202611221235';
+import { DISCIPLINAS } from './modelos.js?v=202611221235';
+import { nav } from './nav.js?v=202611221235';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js?v=202611221235';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);

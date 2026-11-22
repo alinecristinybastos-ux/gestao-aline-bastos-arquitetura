@@ -2,20 +2,20 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js';
-import { nav } from '../nav.js';
-import { EQUIPE } from '../config.js';
-import { CATEGORIAS } from '../modelos.js';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221235';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221235';
+import { nav } from '../nav.js?v=202611221235';
+import { EQUIPE } from '../config.js?v=202611221235';
+import { CATEGORIAS } from '../modelos.js?v=202611221235';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento,
-} from '../negocio.js';
+} from '../negocio.js?v=202611221235';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
   ligarLinhasComplementares, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe,
-} from '../componentes.js';
-import { STATUS_PROJ } from './projetos.js';
+} from '../componentes.js?v=202611221235';
+import { STATUS_PROJ } from './projetos.js?v=202611221235';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
