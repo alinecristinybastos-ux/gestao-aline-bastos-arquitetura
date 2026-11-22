@@ -5,12 +5,12 @@
 //  ir para vários dias. Reuniões podem ser marcadas em cada dia.
 //  Cada dia programado é um registro em "tarefas" com tipo 'projeto'.
 // =====================================================================
-import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221748';
-import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221748';
-import { nav } from '../nav.js?v=202611221748';
-import { EQUIPE } from '../config.js?v=202611221748';
-import { formTarefa } from '../componentes.js?v=202611221748';
-import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas, aguardandoParceiros } from '../negocio.js?v=202611221748';
+import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221806';
+import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221806';
+import { nav } from '../nav.js?v=202611221806';
+import { EQUIPE } from '../config.js?v=202611221806';
+import { formTarefa } from '../componentes.js?v=202611221806';
+import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas, aguardandoParceiros } from '../negocio.js?v=202611221806';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -38,8 +38,8 @@ function cartaoPaleta(p, vezes) {
   const f = faseAtual(p.id);
   return `<div class="cartao-prog paleta saude-${saudeProjeto(p).cor}" draggable="true" data-paleta="${p.id}" title="Arraste para um dia (ou clique para escolher os dias)">
     <div class="corpo-prog">
-      <div class="tit-prog">${h(p.nome)}</div>
-      <div class="sub-prog">${h(nomeCliente(p.cliente_id))}</div>
+      <div class="tit-prog">${h(nomeCliente(p.cliente_id))}</div>
+      <div class="sub-prog">${h(p.nome)}</div>
       ${f ? `<div class="sub-prog fase-prog">${icone('seta', 11)} ${h(f.nome)}</div>` : ''}
       ${vezes ? `<div class="vezes-prog">${vezes}× nesta semana</div>` : ''}
     </div>
@@ -71,8 +71,8 @@ function cartaoDia(t) {
   return `<div class="cartao-prog tipo-projeto saude-${saudeProjeto(p).cor} ${feito ? 'feito' : ''}" draggable="true" data-item="${t.id}">
     <button class="caixa-prog" data-feito="${t.id}" title="${feito ? 'Desmarcar' : 'Trabalhei neste projeto'}">${feito ? icone('check', 13) : ''}</button>
     <div class="corpo-prog" data-abrir="${p.id}" title="Abrir o projeto">
-      <div class="tit-prog">${h(p.nome)}</div>
-      <div class="sub-prog">${h(nomeCliente(p.cliente_id))}</div>
+      <div class="tit-prog">${h(nomeCliente(p.cliente_id))}</div>
+      <div class="sub-prog">${h(p.nome)}</div>
       ${f ? `<div class="sub-prog fase-prog">${icone('seta', 11)} ${h(f.nome)}</div>` : ''}
     </div>
     <button class="btn-icone tirar-prog" data-tirar="${t.id}" title="Tirar deste dia">${icone('x', 13)}</button>
@@ -257,7 +257,7 @@ async function programar(p, dia) {
 function escolherDias(p, dias) {
   if (!p) return;
   const m = abrirModal({
-    titulo: `Programar: ${p.nome}`, largura: 460,
+    titulo: `Programar: ${nomeCliente(p.cliente_id)} — ${p.nome}`, largura: 460,
     corpo: `<p class="fraco" style="margin-bottom:10px">Em quais dias ${h(pessoa)} vai trabalhar neste projeto?</p>
       <div class="chips">${dias.map(d => `<button type="button" class="chip" data-d="${d.iso}">${d.nome.slice(0, 3)} ${curta(d.iso)}</button>`).join('')}</div>`,
     rodape: `<span class="espaco"></span><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>Programar</button>`,
