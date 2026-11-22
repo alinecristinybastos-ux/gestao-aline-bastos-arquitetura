@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221436';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221436';
-import { EQUIPE } from './config.js?v=202611221436';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221436';
-import { nav } from './nav.js?v=202611221436';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221436';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221438';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221438';
+import { EQUIPE } from './config.js?v=202611221438';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221438';
+import { nav } from './nav.js?v=202611221438';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221438';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -400,6 +400,35 @@ export const CATEGORIAS_DESPESA = [
   'Equipamentos', 'Tarifas bancárias', 'CAU / anuidades', 'Outros',
 ];
 
+// repetição das despesas fixas: quantos lançamentos são criados de uma vez
+const REPETICOES = {
+  nao: { rotulo: 'Não repete' },
+  semanal: { rotulo: 'Vence toda semana (cria 1 ano)', aviso: 'toda semana pelos próximos 12 meses' },
+  quinzenal: { rotulo: 'Vence toda quinzena (cria 1 ano)', aviso: 'a cada 15 dias pelos próximos 12 meses' },
+  mensal: { rotulo: 'Vence todo mês (cria 12 meses)', aviso: 'todo mês pelos próximos 12 meses' },
+  anual: { rotulo: 'Vence todo ano (cria 5 anos)', aviso: 'todo ano pelos próximos 5 anos' },
+};
+
+/** Datas de vencimento da série. Quinzena: no dia escolhido e 15 dias depois, todo mês. */
+function datasRepeticao(inicio, tipo) {
+  const [a, m, d] = inicio.split('-').map(Number);
+  const iso = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  const noMes = (ano, mes, dia) => new Date(ano, mes, Math.min(dia, new Date(ano, mes + 1, 0).getDate()));
+  if (tipo === 'semanal') return Array.from({ length: 52 }, (_, i) => iso(new Date(a, m - 1, d + 7 * i)));
+  if (tipo === 'anual') return Array.from({ length: 5 }, (_, i) => iso(noMes(a + i, m - 1, d)));
+  if (tipo === 'quinzenal') {
+    const d2 = d + 15 > 28 ? d - 15 : d + 15; // segunda data da quinzena no mesmo mês
+    const out = [];
+    for (let i = 0; i < 12; i++) {
+      out.push(iso(noMes(a, m - 1 + i, d)));
+      const seg = noMes(a, m - 1 + i + (d2 < d ? 1 : 0), d2);
+      out.push(iso(seg));
+    }
+    return out.sort();
+  }
+  return Array.from({ length: 12 }, (_, i) => iso(noMes(a, m - 1 + i, d)));
+}
+
 function mesmaSerieDepois(d) {
   return d.grupo ? store.despesas.filter(x => x.grupo === d.grupo && x.vencimento > d.vencimento) : [];
 }
@@ -411,8 +440,8 @@ export function formDespesa(desp = null, padrao = {}) {
     { nome: 'valor', rotulo: 'Valor', tipo: 'moeda', obrigatorio: true, largura: 'meia' },
     { nome: 'vencimento', rotulo: 'Vencimento', tipo: 'date', obrigatorio: true, largura: 'meia' },
     { nome: 'forma', rotulo: 'Forma de pagamento', tipo: 'select', opcoes: ['PIX', 'Cartão de crédito', 'Boleto', 'Débito automático', 'Transferência', 'Dinheiro'].map(o => [o, o]), largura: 'meia' },
-    ...(!desp ? [{ nome: 'repetir', rotulo: 'Despesa fixa: repetir todo mês (cria os próximos 12 meses)', tipo: 'checkbox' }] : []),
-    ...(desp?.grupo ? [{ nome: 'serie', rotulo: `Aplicar descrição, categoria e valor também aos próximos meses (${mesmaSerieDepois(desp).length})`, tipo: 'checkbox' }] : []),
+    ...(!desp ? [{ nome: 'repetir', rotulo: 'Repetição', tipo: 'select', vazio: false, largura: 'meia', opcoes: Object.entries(REPETICOES).map(([k, v]) => [k, v.rotulo]) }] : []),
+    ...(desp?.grupo ? [{ nome: 'serie', rotulo: `Aplicar descrição, categoria e valor também aos próximos lançamentos desta série (${mesmaSerieDepois(desp).length})`, tipo: 'checkbox' }] : []),
     { nome: 'pago', rotulo: 'Já está pago', tipo: 'checkbox' },
     { nome: 'pago_em', rotulo: 'Pago em', tipo: 'date', largura: 'meia' },
     { nome: 'projeto_id', rotulo: 'Ligada a um projeto (opcional)', tipo: 'select', opcoes: opcoesProjetos(false), vazio: 'Despesa geral do escritório', largura: 'meia' },
@@ -430,18 +459,12 @@ export function formDespesa(desp = null, padrao = {}) {
       if (desp) {
         await atualizar('despesas', desp.id, d);
         if (serie) for (const x of mesmaSerieDepois(desp)) await atualizar('despesas', x.id, { descricao: d.descricao, categoria: d.categoria, valor: d.valor });
-      } else if (repetir) {
+      } else if (repetir && repetir !== 'nao') {
         const grupo = uid();
-        const [a, mm, dd] = d.vencimento.split('-').map(Number);
-        const linhas = Array.from({ length: 12 }, (_, i) => {
-          const dt = new Date(a, mm - 1 + i, 1);
-          const fim = new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate();
-          const venc = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(Math.min(dd, fim)).padStart(2, '0')}`;
-          return { ...d, vencimento: venc, grupo, pago: i === 0 ? d.pago : false, pago_em: i === 0 ? d.pago_em : null };
-        });
-        await inserir('despesas', linhas);
+        const datas = datasRepeticao(d.vencimento, repetir);
+        await inserir('despesas', datas.map((venc, i) => ({ ...d, vencimento: venc, grupo, pago: i === 0 ? d.pago : false, pago_em: i === 0 ? d.pago_em : null })));
       } else await inserir('despesas', d);
-      aviso(repetir ? 'Despesa fixa lançada para os próximos 12 meses' : 'Despesa salva'); nav.recarregar();
+      aviso(repetir && repetir !== 'nao' ? `Despesa lançada: ${REPETICOES[repetir].aviso}` : 'Despesa salva'); nav.recarregar();
     },
   });
   const f = m.el.querySelector('form');
