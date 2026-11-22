@@ -429,6 +429,9 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
 .barra-cat small { color: var(--texto-3); text-align: right; }
 @media (max-width: 860px) { .barra-cat { grid-template-columns: 1fr 90px; } .barra-cat .progresso { grid-column: 1 / -1; order: 3; } .barra-cat small { display: none; } }
 
+.lembrete-backup { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; padding: 10px 14px; background: var(--areia-clara); border-color: var(--areia); color: #6a5220; flex-wrap: wrap; }
+.lembrete-backup span { flex: 1; min-width: 200px; font-size: .9rem; }
+
 /* ---------------------------------------------------------------- modal */
 .modal-fundo { position: fixed; inset: 0; background: rgba(23, 31, 16, .45); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; z-index: 50; overflow-y: auto; animation: aparecer .15s ease-out; }
 .modal { background: var(--papel); border-radius: 14px; width: 100%; box-shadow: var(--sombra-forte); display: flex; flex-direction: column; max-height: 90vh; animation: subir .18s ease-out; }

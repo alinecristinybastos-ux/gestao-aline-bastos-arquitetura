@@ -1,20 +1,21 @@
 // =====================================================================
 //  Aplicativo: login, menu lateral e rotas
 // =====================================================================
-import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611221501';
-import { icone, h, aviso, diasAte } from './util.js?v=202611221501';
-import { nav } from './nav.js?v=202611221501';
-import { situacaoRecebimento } from './negocio.js?v=202611221501';
-import { criarDadosExemplo } from './exemplo.js?v=202611221501';
+import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611221503';
+import { icone, h, aviso, diasAte } from './util.js?v=202611221503';
+import { nav } from './nav.js?v=202611221503';
+import { situacaoRecebimento } from './negocio.js?v=202611221503';
+import { abrirBackup, diasSemBackup } from './backup.js?v=202611221503';
+import { criarDadosExemplo } from './exemplo.js?v=202611221503';
 
-import * as painel from './telas/painel.js?v=202611221501';
-import * as projetos from './telas/projetos.js?v=202611221501';
-import * as projeto from './telas/projeto.js?v=202611221501';
-import * as clientes from './telas/clientes.js?v=202611221501';
-import * as financeiro from './telas/financeiro.js?v=202611221501';
-import * as orcamentos from './telas/orcamentos.js?v=202611221501';
-import * as tarefas from './telas/tarefas.js?v=202611221501';
-import * as parceiros from './telas/parceiros.js?v=202611221501';
+import * as painel from './telas/painel.js?v=202611221503';
+import * as projetos from './telas/projetos.js?v=202611221503';
+import * as projeto from './telas/projeto.js?v=202611221503';
+import * as clientes from './telas/clientes.js?v=202611221503';
+import * as financeiro from './telas/financeiro.js?v=202611221503';
+import * as orcamentos from './telas/orcamentos.js?v=202611221503';
+import * as tarefas from './telas/tarefas.js?v=202611221503';
+import * as parceiros from './telas/parceiros.js?v=202611221503';
 
 const MENU = [
   ['painel', 'Painel', 'painel'],
@@ -42,6 +43,7 @@ function montarCasca(usuario) {
       </nav>
       <div class="rodape-lateral">
         ${modoDemo ? `<div class="selo-demo">Modo demonstração — dados só neste navegador.<br><button id="btn-zerar">Apagar e recomeçar</button></div>` : ''}
+        <button id="btn-backup">${icone('arquivo', 16)} Baixar backup</button>
         <div>${h(usuario?.email || '')}</div>
         ${!modoDemo ? `<button id="btn-sair">${icone('sair', 16)} Sair</button>` : ''}
       </div>
@@ -57,6 +59,7 @@ function montarCasca(usuario) {
   conteudo = document.getElementById('conteudo');
   document.getElementById('btn-menu').onclick = () => document.body.classList.toggle('menu-aberto');
   document.getElementById('btn-sair')?.addEventListener('click', sair);
+  document.getElementById('btn-backup').addEventListener('click', abrirBackup);
   document.getElementById('btn-zerar')?.addEventListener('click', () => {
     if (confirm('Apagar todos os dados de demonstração deste navegador?')) zerarDemo();
   });
@@ -98,6 +101,13 @@ function desenhar() {
   } catch (e) {
     console.error(e);
     conteudo.innerHTML = `<div class="cartao cartao-corpo">Não foi possível abrir esta tela: ${h(e.message)}</div>`;
+  }
+  const semBackup = diasSemBackup();
+  if (nome === 'painel' && (semBackup === null || semBackup > 7)) {
+    conteudo.insertAdjacentHTML('afterbegin', `<div class="cartao cartao-corpo lembrete-backup">${icone('arquivo', 16)}
+      <span>${semBackup === null ? 'Você ainda não baixou nenhum backup dos dados neste computador.' : `Seu último backup foi há ${semBackup} dias.`} Vale guardar uma cópia fora.</span>
+      <button class="btn btn-peq" id="lembrete-bk">Baixar backup</button></div>`);
+    document.getElementById('lembrete-bk').addEventListener('click', abrirBackup);
   }
   if (tabelasFaltando.length) {
     conteudo.insertAdjacentHTML('afterbegin', `<div class="cartao cartao-corpo" style="margin-bottom:16px;border-color:var(--terracota);background:var(--terracota-clara);color:var(--terracota)">

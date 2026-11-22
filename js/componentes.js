@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221501';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221501';
-import { EQUIPE } from './config.js?v=202611221501';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221501';
-import { nav } from './nav.js?v=202611221501';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221501';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221503';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221503';
+import { EQUIPE } from './config.js?v=202611221503';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221503';
+import { nav } from './nav.js?v=202611221503';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221503';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
