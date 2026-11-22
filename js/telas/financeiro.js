@@ -2,11 +2,11 @@
 //  FINANCEIRO — resumo do mês (receitas, despesas e resultado),
 //  a receber, recebidos, parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221428';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221428';
-import { nav } from '../nav.js?v=202611221428';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro } from '../negocio.js?v=202611221428';
-import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa } from '../componentes.js?v=202611221428';
+import { store, porId, atualizar } from '../dados.js?v=202611221436';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221436';
+import { nav } from '../nav.js?v=202611221436';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro } from '../negocio.js?v=202611221436';
+import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa } from '../componentes.js?v=202611221436';
 
 let aba = 'mes';
 let mesSel = hoje().slice(0, 7);
@@ -23,7 +23,6 @@ export function render(el) {
   const recs = store.recebimentos.filter(ativo);
   const abertos = recs.filter(r => r.status !== 'pago');
   const cobrar = abertos.filter(r => ['liberado', 'atrasado'].includes(situacaoRecebimento(r).cod));
-  const recebidosAno = recs.filter(r => r.status === 'pago' && String(r.pago_em || '').startsWith(String(ano)));
   const contas = store.parceiros.map(p => ({ p, conta: contaParceiro(p.id) }));
   const aPagar = contas.filter(x => x.conta.saldo > 0.009);
 
@@ -33,7 +32,8 @@ export function render(el) {
     <div class="indicadores">
       <div class="indicador ${cobrar.length ? 'alerta' : ''}"><div class="rot">Para cobrar agora</div><div class="val">${moeda(soma(cobrar))}</div><div class="det">fases entregues ou datas vencidas</div></div>
       <div class="indicador"><div class="rot">A receber (total)</div><div class="val">${moeda(soma(abertos))}</div><div class="det">${abertos.length} parcelas</div></div>
-      <div class="indicador destaque"><div class="rot">Recebido em ${ano}</div><div class="val">${moeda(soma(recebidosAno))}</div></div>
+      <div class="indicador destaque"><div class="rot">Recebido em ${NOMES_MES[Number(hoje().slice(5, 7)) - 1]}</div><div class="val">${moeda(soma(recs.filter(r => r.status === 'pago' && String(r.pago_em || '').startsWith(hoje().slice(0, 7)))))}</div>
+        <div class="det">${moeda(soma(recs.filter(r => r.status === 'pago' && String(r.pago_em || '').startsWith(hoje().slice(0, 4)))))} no ano de ${hoje().slice(0, 4)}</div></div>
       <div class="indicador"><div class="rot">A pagar a parceiros</div><div class="val">${moeda(aPagar.reduce((s, x) => s + x.conta.saldo, 0))}</div><div class="det">${aPagar.length} parceiro${aPagar.length === 1 ? '' : 's'} com saldo</div></div>
     </div>
     <div class="abas">
