@@ -93,7 +93,7 @@ const CONTRATACAO = {
   chave: 'contratacao', nome: 'Contratação', dias: 3,
   entrega: 'Contrato assinado, prazos definidos e entrada recebida.',
   grupos: {
-    'Cadastro e contrato': 'Cadastrar cliente e responsáveis pelas decisões|Aprovar proposta / orçamento|Anexar contrato assinado|Definir prazos de cada fase|Programar os pagamentos (entrada, 3D, entrega final)|Receber pagamento da entrada|Emitir RRT',
+    'Cadastro e contrato': 'Cadastrar cliente e responsáveis pelas decisões|Aprovar proposta / orçamento|Receber o contrato assinado|Definir prazos de cada fase|Programar os pagamentos (entrada, 3D, entrega final)|Receber pagamento da entrada|Emitir RRT',
   },
 };
 

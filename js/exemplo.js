@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221503';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221503';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221503';
-import { hoje, somarDias } from './util.js?v=202611221503';
+import { store, inserir, atualizar } from './dados.js?v=202611221509';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221509';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221509';
+import { hoje, somarDias } from './util.js?v=202611221509';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -18,7 +18,7 @@ async function projetoExemplo({ cliente, nome, categoria, tipo, intervencao, ini
     etapaIndice: Math.max(0, etapas.findIndex(e => e.chave === pg.chave)),
   })).concat(extras);
   const p = await criarProjeto({
-    projeto: { cliente_id: cliente.id, nome, categoria, tipo, intervencao, valor_contrato: valor, endereco_obra: endereco, area_m2: area,
+    projeto: { cliente_id: cliente.id, nome, categoria, tipo, intervencao, valor_contrato: valor, endereco_obra: endereco, area_m2: area, contrato_assinado: nome !== 'Apartamento Helena',
       data_assinatura: inicio, data_inicio: inicio, data_prevista: etapas[etapas.length - 1].prazo },
     etapas, recebimentos,
   });

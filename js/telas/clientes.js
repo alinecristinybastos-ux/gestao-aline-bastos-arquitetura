@@ -1,12 +1,12 @@
 // =====================================================================
 //  CLIENTES — lista e ficha do cliente
 // =====================================================================
-import { store, porId, remover } from '../dados.js?v=202611221503';
-import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221503';
-import { nav } from '../nav.js?v=202611221503';
-import { recebimentosDo } from '../negocio.js?v=202611221503';
-import { formCliente, blocoAnexos, ligarBlocoAnexos, ehPJ, responsaveisDe, familiaDe, idadeAtual } from '../componentes.js?v=202611221503';
-import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221503';
+import { store, porId, remover } from '../dados.js?v=202611221509';
+import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221509';
+import { nav } from '../nav.js?v=202611221509';
+import { recebimentosDo } from '../negocio.js?v=202611221509';
+import { formCliente, ehPJ, responsaveisDe, familiaDe, idadeAtual } from '../componentes.js?v=202611221509';
+import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221509';
 
 let busca = '';
 
@@ -60,8 +60,6 @@ function ficha(el, id) {
         <div class="cartao"><div class="cartao-cab"><h2>Projetos</h2></div>
           <div class="cartao-corpo">${ps.length ? `<div class="grade grade-2">${ps.map(cartaoProjeto).join('')}</div>` : '<div class="vazio">Nenhum projeto ainda.</div>'}</div></div>
         ${orcs.length ? `<div class="cartao"><div class="cartao-cab"><h2>Orçamentos</h2></div><table class="tabela"><tbody>${orcs.map(o => `<tr><td>${h(o.numero || '')} ${h(o.descricao || '')}</td><td>${data(o.data)}</td><td class="num">${moeda(o.valor)}</td><td>${h(o.status)}</td></tr>`).join('')}</tbody></table></div>` : ''}
-        <div class="cartao cartao-corpo"><h2 style="font-weight:400;font-size:1.05rem;color:var(--verde-escuro);margin-bottom:12px">${ehPJ(c) ? 'Documentos da empresa' : 'Documentos do cliente'}</h2>
-          ${blocoAnexos('cliente', id, { titulo: 'este cliente', categorias: ehPJ(c) ? ['Contrato social', 'Cartão CNPJ', 'Documento do responsável', 'Matrícula / escritura', 'IPTU', 'Alvará / licenças', 'Projeto aprovado', 'Outro'] : ['Documento pessoal', 'Matrícula / escritura', 'IPTU', 'Projeto aprovado', 'Outro'] })}</div>
       </div>
       <div class="grade">
         ${ehPJ(c) ? `<div class="cartao"><div class="cartao-cab"><h2>Responsáveis pelo projeto</h2><button class="btn btn-peq btn-leve" data-ed-resp>${icone('editar', 14)}</button></div>
@@ -101,5 +99,4 @@ function ficha(el, id) {
     await tentar(() => remover('clientes', id), 'Cliente excluído'); nav.ir('clientes');
   });
   ligarCartoes(el);
-  ligarBlocoAnexos(el);
 }

@@ -2,20 +2,21 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221503';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221503';
-import { nav } from '../nav.js?v=202611221503';
-import { EQUIPE } from '../config.js?v=202611221503';
-import { CATEGORIAS, infoServico } from '../modelos.js?v=202611221503';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221509';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221509';
+import { nav } from '../nav.js?v=202611221509';
+import { EQUIPE } from '../config.js?v=202611221509';
+import { CATEGORIAS, infoServico } from '../modelos.js?v=202611221509';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento, esperaComplementares, nomeParceiro, complAtrasado, STATUS_COMPL, pendenciasAbertas,
-} from '../negocio.js?v=202611221503';
+} from '../negocio.js?v=202611221509';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
   ligarLinhasComplementares, formComplementaresContratados, formServicosContratados, formServico, formRegistroServico, STATUS_SERV, formPendencia, linhaPendencia, ligarPendencias, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221503';
-import { STATUS_PROJ } from './projetos.js?v=202611221503';
+} from '../componentes.js?v=202611221509';
+import { botaoRecibo, ligarRecibos } from '../recibo.js?v=202611221509';
+import { STATUS_PROJ } from './projetos.js?v=202611221509';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -26,7 +27,7 @@ export function render(el, [id, aba]) {
   if (!p) { el.innerHTML = `<div class="cartao vazio">Projeto não encontrado. <br><a href="#/projetos">Voltar aos projetos</a></div>`; return; }
   if (estado.projeto !== id) { estado.projeto = id; estado.etapa = null; estado.aba = 'etapas'; estado.hash = ''; }
   // aba vinda do link (#/projeto/id/financeiro) só é aplicada ao entrar
-  if (aba && estado.hash !== location.hash) estado.aba = aba;
+  if (aba && estado.hash !== location.hash) estado.aba = aba === 'arquivos' ? 'etapas' : aba;
   estado.hash = location.hash;
   const etapas = etapasDo(id);
   if (!estado.etapa || !etapas.some(e => e.id === estado.etapa)) estado.etapa = (faseAtual(id) || etapas[etapas.length - 1])?.id || null;
@@ -36,7 +37,6 @@ export function render(el, [id, aba]) {
   const nCompl = store.complementares.filter(c => c.projeto_id === id).length;
   const nServ = store.servicos.filter(x => x.projeto_id === id && x.status !== 'concluido').length;
   const nTar = store.tarefas.filter(t => t.projeto_id === id && t.status !== 'feito').length;
-  const nArq = store.anexos.filter(a => a.ref_tipo === 'projeto' && a.ref_id === id).length;
   const cobrar = recebimentosDo(id).filter(r => ['liberado', 'atrasado'].includes(situacaoRecebimento(r).cod)).length;
 
   el.innerHTML = `
@@ -51,7 +51,8 @@ export function render(el, [id, aba]) {
           ${p.area_m2 ? `<span>${h(p.area_m2)} m²</span>` : ''}
           <span>${icone('calendario', 15)} entrega prevista ${data(p.data_prevista)}</span>
           <span><select id="status-proj" class="entrada" style="padding:3px 8px;width:auto">${Object.entries(STATUS_PROJ).map(([k, v]) => `<option value="${k}" ${p.status === k ? 'selected' : ''}>${v}</option>`).join('')}</select></span>
-          ${p.contrato_path ? `<span class="tag tag-ok">${icone('check', 12)} Contrato anexado</span>` : `<span class="tag tag-alerta">Contrato não anexado</span>`}
+          ${p.contrato_assinado ? `<span class="tag tag-ok" title="Clique para desmarcar" id="tg-contrato" style="cursor:pointer">${icone('check', 12)} Contrato assinado</span>`
+            : `<button class="tag tag-alerta" id="tg-contrato" style="cursor:pointer;border:0" title="Marcar que o contrato assinado foi recebido">Contrato assinado pendente · marcar recebido</button>`}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
@@ -72,16 +73,22 @@ export function render(el, [id, aba]) {
     }).join('')}</div>
 
     <div class="abas">
-      ${[['etapas', 'Etapas e checklist'], ['financeiro', 'Financeiro', cobrar], ['complementares', 'Complementares', nCompl], ['servicos', 'Serviços', nServ], ['tarefas', 'Tarefas', nTar], ['arquivos', 'Arquivos', nArq], ['dados', 'Dados do projeto']]
+      ${[['etapas', 'Etapas e checklist'], ['financeiro', 'Financeiro', cobrar], ['complementares', 'Complementares', nCompl], ['servicos', 'Serviços', nServ], ['tarefas', 'Tarefas', nTar], ['dados', 'Dados do projeto']]
         .map(([k, n, c]) => `<button data-aba="${k}" class="${estado.aba === k ? 'ativo' : ''}">${n}${c ? ` <span class="contagem">${c}</span>` : ''}</button>`).join('')}
     </div>
     <div id="aba-conteudo"></div>`;
 
   const area = el.querySelector('#aba-conteudo');
-  ({ etapas: abaEtapas, financeiro: abaFinanceiro, complementares: abaComplementares, servicos: abaServicos, tarefas: abaTarefas, arquivos: abaArquivos, dados: abaDados })[estado.aba](area, p);
+  ({ etapas: abaEtapas, financeiro: abaFinanceiro, complementares: abaComplementares, servicos: abaServicos, tarefas: abaTarefas, dados: abaDados })[estado.aba](area, p);
 
   el.querySelectorAll('[data-aba]').forEach(b => b.addEventListener('click', () => { estado.aba = b.dataset.aba; render(el, [id]); }));
   el.querySelectorAll('[data-ir-etapa]').forEach(b => b.addEventListener('click', () => { estado.etapa = b.dataset.irEtapa; estado.aba = 'etapas'; render(el, [id]); }));
+  el.querySelector('#tg-contrato').addEventListener('click', async () => {
+    const novo = !p.contrato_assinado;
+    if (!await confirmar(novo ? 'Marcar que o contrato assinado já foi recebido?' : 'Voltar o contrato para "assinatura pendente"?', { ok: novo ? 'Sim, recebi' : 'Desmarcar' })) return;
+    await tentar(() => atualizar('projetos', id, { contrato_assinado: novo }), novo ? 'Contrato assinado registrado' : 'Contrato marcado como pendente');
+    nav.recarregar();
+  });
   el.querySelector('#nova-pend').addEventListener('click', () => formPendencia(null, { projeto_id: id, etapa_id: estado.etapa }));
   ligarPendencias(el);
   el.querySelector('#status-proj').addEventListener('change', async e => {
@@ -363,11 +370,12 @@ function abaFinanceiro(area, p) {
           <td>${tagRecebimento(r)}${r.status === 'pago' ? `<div class="fraco">${data(r.pago_em)}${r.forma ? ' · ' + h(r.forma) : ''}</div>` : ''}</td>
           <td class="num">${moeda(r.valor)}</td>
           <td class="num">${r.status !== 'pago' ? `<button class="btn btn-peq" data-receber="${r.id}">${icone('check', 14)} Recebido</button>` : ''}
-            <button class="btn-icone" data-editar-rec="${r.id}" title="Editar">${icone('editar', 15)}</button></td></tr>`;
+            ${botaoRecibo(r)}<button class="btn-icone" data-editar-rec="${r.id}" title="Editar">${icone('editar', 15)}</button></td></tr>`;
       }).join('')}</tbody></table></div>` : '<div class="vazio">Nenhum pagamento programado.</div>'}
     </div>`;
   area.querySelector('#add-rec').addEventListener('click', () => formRecebimento(null, p.id));
   area.querySelectorAll('[data-editar-rec]').forEach(b => b.addEventListener('click', () => formRecebimento(porId('recebimentos', b.dataset.editarRec), p.id)));
+  ligarRecibos(area);
   area.querySelectorAll('[data-receber]').forEach(b => b.addEventListener('click', async () => {
     await tentar(() => marcarRecebido(porId('recebimentos', b.dataset.receber))); nav.recarregar();
   }));
@@ -481,7 +489,7 @@ function abaDados(area, p) {
   const linhas = [
     ['Código', p.codigo], ['Cliente', nomeCliente(p.cliente_id)], ['Categoria', CATEGORIAS[p.categoria]], ['Tipo', descricaoTipo(p)],
     ['Endereço da obra', p.endereco_obra], ['Área', p.area_m2 ? `${p.area_m2} m²` : ''], ['Valor do contrato', moeda(p.valor_contrato)],
-    ['Assinatura do contrato', data(p.data_assinatura)], ['Início', data(p.data_inicio)], ['Entrega prevista', data(p.data_prevista)],
+    ['Data do contrato', data(p.data_assinatura)], ['Contrato assinado', p.contrato_assinado ? 'Recebido' : 'Pendente'], ['Início', data(p.data_inicio)], ['Entrega prevista', data(p.data_prevista)],
     ['Situação', STATUS_PROJ[p.status]], ['Observações', p.observacoes],
   ];
   area.innerHTML = `<div class="cartao">
@@ -503,7 +511,8 @@ function abaDados(area, p) {
       { nome: 'endereco_obra', rotulo: 'Endereço da obra', largura: 'meia' },
       { nome: 'area_m2', rotulo: 'Área (m²)', tipo: 'number', largura: 'meia' },
       { nome: 'valor_contrato', rotulo: 'Valor do contrato', tipo: 'moeda', largura: 'meia' },
-      { nome: 'data_assinatura', rotulo: 'Assinatura do contrato', tipo: 'date', largura: 'meia' },
+      { nome: 'data_assinatura', rotulo: 'Data do contrato', tipo: 'date', largura: 'meia' },
+      { nome: 'contrato_assinado', rotulo: 'Já recebi o contrato assinado', tipo: 'checkbox' },
       { nome: 'data_inicio', rotulo: 'Início', tipo: 'date', largura: 'meia' },
       { nome: 'data_prevista', rotulo: 'Entrega prevista', tipo: 'date', largura: 'meia' },
       { nome: 'observacoes', rotulo: 'Observações', tipo: 'textarea' },

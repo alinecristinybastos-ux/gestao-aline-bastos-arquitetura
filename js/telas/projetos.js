@@ -1,12 +1,12 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611221503';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221503';
-import { nav } from '../nav.js?v=202611221503';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO, infoServico } from '../modelos.js?v=202611221503';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221503';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221503';
+import { store, atualizar } from '../dados.js?v=202611221509';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221509';
+import { nav } from '../nav.js?v=202611221509';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO, infoServico } from '../modelos.js?v=202611221509';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221509';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221509';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };
@@ -25,7 +25,8 @@ export function esperaTag(pid) {
   const esp = aguardandoParceiros(pid);
   const pend = pendenciasAbertas(pid);
   const atras = pend.some(x => x.prazo && x.prazo < hoje());
-  const tags = [esp && `<span class="tag tag-terracota">aguardando parceiros · ${esp.recebidos}/${esp.total}</span>`,
+  const pr = store.projetos.find(x => x.id === pid);
+  const tags = [pr && !pr.contrato_assinado && ['ativo', 'pausado'].includes(pr.status) && '<span class="tag tag-alerta">contrato assinado pendente</span>', esp && `<span class="tag tag-terracota">aguardando parceiros · ${esp.recebidos}/${esp.total}</span>`,
     pend.length && `<span class="tag ${atras ? 'tag-atrasado' : 'tag-terracota'}" title="${h(pend.map(x => x.descricao).join(' · '))}">${icone('alerta', 11)} aguardando cliente${pend.length > 1 ? ` (${pend.length})` : ''}</span>`].filter(Boolean);
   return tags.length ? `<div style="margin:-2px 0 8px;display:flex;gap:4px;flex-wrap:wrap">${tags.join('')}</div>` : '';
 }
@@ -130,7 +131,7 @@ export function novoProjeto(pre = {}) {
     passo: 1,
     cliente_id: pre.cliente_id || '', nome: pre.nome || '', endereco_obra: pre.endereco_obra || '', area_m2: pre.area_m2 ?? '',
     categoria: pre.categoria || 'arquitetonico', tipo: pre.tipo || 'residencial', intervencao: pre.intervencao || 'novo',
-    data_inicio: hoje(), data_assinatura: hoje(), valor_contrato: pre.valor_contrato ?? '', contrato: null, observacoes: pre.observacoes || '',
+    data_inicio: hoje(), data_assinatura: hoje(), valor_contrato: pre.valor_contrato ?? '', contrato_assinado: false, observacoes: pre.observacoes || '',
     etapas: null, pagamentos: null, orcamento_id: pre.orcamento_id || null, complementares: pre.complementares || [], servicos: pre.servicos || [],
   };
   const PASSOS = ['Cliente e obra', 'Tipo de projeto', 'Etapas e prazos', 'Contrato e pagamentos'];
@@ -223,10 +224,9 @@ export function novoProjeto(pre = {}) {
     const dif = +(total - soma).toFixed(2);
     return `
       <div class="form-grade" style="margin-bottom:14px">
-        ${campoHTML({ nome: 'data_assinatura', rotulo: 'Data da assinatura', tipo: 'date', largura: 'terco' }, st.data_assinatura)}
+        ${campoHTML({ nome: 'data_assinatura', rotulo: 'Data do contrato', tipo: 'date', largura: 'terco' }, st.data_assinatura)}
         ${campoHTML({ nome: 'valor_contrato', rotulo: 'Valor do contrato', tipo: 'moeda', largura: 'terco' }, st.valor_contrato)}
-        <div class="campo terco"><label>Contrato assinado (PDF)</label><input type="file" id="a-contrato" accept=".pdf,image/*,.doc,.docx">
-          <small>${st.contrato ? h(st.contrato.name) : 'Pode anexar depois também'}</small></div>
+        <label class="campo campo-check terco" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="a-contrato" ${st.contrato_assinado ? 'checked' : ''}> Já recebi o contrato assinado</label>
       </div>
       <div class="rotulo-sec">Pagamentos programados — por data certa ou pela entrega de uma fase</div>
       <div class="tabela-envolve"><table class="tabela tabela-prazos">
@@ -308,7 +308,7 @@ export function novoProjeto(pre = {}) {
         st.pagamentos.forEach(p => { if (p.pct !== '' && p.pct != null) p.valor = +(total * Number(p.pct) / 100).toFixed(2); });
         desenhar();
       });
-      corpo.querySelector('#a-contrato').addEventListener('change', e => { st.contrato = e.target.files[0] || null; });
+      corpo.querySelector('#a-contrato').addEventListener('change', e => { st.contrato_assinado = e.target.checked; });
       corpo.querySelectorAll('[data-pg]').forEach(inp => inp.addEventListener('change', () => {
         const p = st.pagamentos[inp.dataset.pg]; const campo = inp.dataset.campo; const total = Number(st.valor_contrato) || 0;
         p[campo] = inp.value;
@@ -346,7 +346,7 @@ export function novoProjeto(pre = {}) {
           tipo: st.categoria === 'complementares' ? 'complementares' : st.tipo,
           intervencao: precisaIntervencao() ? st.intervencao : null,
           endereco_obra: st.endereco_obra, area_m2: st.area_m2 === '' ? null : Number(st.area_m2),
-          valor_contrato: Number(st.valor_contrato) || 0, data_assinatura: st.data_assinatura || null,
+          valor_contrato: Number(st.valor_contrato) || 0, data_assinatura: st.data_assinatura || null, contrato_assinado: !!st.contrato_assinado,
           data_inicio: st.data_inicio, data_prevista: prazos[prazos.length - 1] || null, observacoes: st.observacoes,
         },
         etapas: incluidas.map(x => x.e),
@@ -354,7 +354,6 @@ export function novoProjeto(pre = {}) {
           descricao: pg.descricao, valor: Number(pg.valor), gatilho: pg.gatilho, vencimento: pg.vencimento,
           etapaIndice: mapa[Number(pg.etapaIndice)] ?? 0,
         })),
-        contrato: st.contrato,
       });
       if (st.complementares.length) await registrarComplementares(p.id, st.complementares);
       if (st.servicos.length) await registrarServicos(p.id, st.servicos);

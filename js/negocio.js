@@ -2,9 +2,9 @@
 //  Regras do escritório: criação de projeto, fases, progresso,
 //  situação dos recebimentos e dos complementares.
 // =====================================================================
-import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221503';
-import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221503';
-import { hoje, diasAte } from './util.js?v=202611221503';
+import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221509';
+import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221509';
+import { hoje, diasAte } from './util.js?v=202611221509';
 
 export const nomeCliente = (id) => porId('clientes', id)?.nome || 'Sem cliente';
 export const nomeParceiro = (id) => porId('parceiros', id)?.nome || 'A definir';
@@ -138,11 +138,11 @@ function proximoCodigo() {
 }
 
 /**
- * Cria projeto + etapas + checklist + recebimentos (+ contrato anexado).
+ * Cria projeto + etapas + checklist + recebimentos.
  * etapas: [{chave,nome,entrega,data_inicio,prazo,grupos}]
  * recebimentos: [{descricao,valor,gatilho,vencimento,etapaIndice}]
  */
-export async function criarProjeto({ projeto, etapas, recebimentos = [], contrato = null }) {
+export async function criarProjeto({ projeto, etapas, recebimentos = [] }) {
   const [p] = await inserir('projetos', { codigo: proximoCodigo(), status: 'ativo', ...projeto });
 
   const etapasRows = etapas.map((e, i) => ({
@@ -170,11 +170,6 @@ export async function criarProjeto({ projeto, etapas, recebimentos = [], contrat
     status: r.status || 'previsto', pago_em: r.pago_em || null, ordem: i,
   })));
 
-  if (contrato) {
-    const arq = await enviarArquivo(contrato, `projetos/${p.id}`);
-    await atualizar('projetos', p.id, { contrato_path: arq.path, contrato_nome: arq.nome });
-    await inserir('anexos', { ref_tipo: 'projeto', ref_id: p.id, categoria: 'Contrato', nome: arq.nome, path: arq.path, tamanho: arq.tamanho });
-  }
   return p;
 }
 

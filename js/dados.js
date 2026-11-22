@@ -4,10 +4,10 @@
 //  - Sem configuração: modo demonstração (localStorage deste navegador)
 //  Todas as tabelas ficam em memória em `store` para as telas lerem.
 // =====================================================================
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221503';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221509';
 
 export const TABELAS = ['clientes', 'projetos', 'etapas', 'itens', 'recebimentos',
-  'orcamentos', 'parceiros', 'complementares', 'pagamentos_parceiros', 'pendencias', 'servicos', 'despesas', 'tarefas', 'anexos'];
+  'orcamentos', 'parceiros', 'complementares', 'pagamentos_parceiros', 'pendencias', 'servicos', 'despesas', 'tarefas', 'anexos', 'config'];
 
 export const store = Object.fromEntries(TABELAS.map(t => [t, []]));
 export const modoDemo = !SUPABASE_URL || !SUPABASE_ANON_KEY;

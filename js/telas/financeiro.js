@@ -2,11 +2,12 @@
 //  FINANCEIRO — resumo do mês (receitas, despesas e resultado),
 //  a receber, recebidos, parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221503';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221503';
-import { nav } from '../nav.js?v=202611221503';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro } from '../negocio.js?v=202611221503';
-import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa } from '../componentes.js?v=202611221503';
+import { store, porId, atualizar } from '../dados.js?v=202611221509';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221509';
+import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611221509';
+import { nav } from '../nav.js?v=202611221509';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro } from '../negocio.js?v=202611221509';
+import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa } from '../componentes.js?v=202611221509';
 
 let aba = 'mes';
 let mesSel = hoje().slice(0, 7);
@@ -28,7 +29,7 @@ export function render(el) {
 
   el.innerHTML = `
     <div class="cab"><div class="titulos"><h1>Financeiro</h1><div class="sub">Receitas dos projetos, despesas do escritório e pagamentos aos parceiros.</div></div>
-      <div class="acoes"><button class="btn btn-primario" id="nova-desp">${icone('mais', 16)} Despesa</button></div></div>
+      <div class="acoes"><button class="btn btn-leve" id="cfg-recibo">${icone('pdf', 16)} Dados do recibo</button><button class="btn btn-primario" id="nova-desp">${icone('mais', 16)} Despesa</button></div></div>
     <div class="indicadores">
       <div class="indicador ${cobrar.length ? 'alerta' : ''}"><div class="rot">Para cobrar agora</div><div class="val">${moeda(soma(cobrar))}</div><div class="det">fases entregues ou datas vencidas</div></div>
       <div class="indicador"><div class="rot">A receber (total)</div><div class="val">${moeda(soma(abertos))}</div><div class="det">${abertos.length} parcelas</div></div>
@@ -44,6 +45,7 @@ export function render(el) {
   const area = el.querySelector('#fin-area');
   ({ mes: () => tabMes(area, recs), receber: () => tabReceber(area, abertos), recebidos: () => tabRecebidos(area, recs), pagar: () => tabPagar(area, aPagar), ano: () => tabAno(area, recs) })[aba]();
   el.querySelectorAll('[data-aba]').forEach(b => b.addEventListener('click', () => { aba = b.dataset.aba; render(el); }));
+  el.querySelector('#cfg-recibo').addEventListener('click', () => formConfigRecibo());
   el.querySelector('#nova-desp').addEventListener('click', () => formDespesa(null, { vencimento: mesSel === hoje().slice(0, 7) ? hoje() : mesSel + '-10' }));
 }
 
@@ -97,7 +99,7 @@ function tabMes(area, recs) {
             return `<tr><td><div>${h(r.descricao)}</div><div class="fraco">${h(p?.nome || '')} · ${h(nomeCliente(p?.cliente_id))}</div>
                 <div class="linha-sit">${tagRecebimento(r)} <span class="fraco">${data(r.status === 'pago' ? r.pago_em : dataReferencia(r))}</span></div></td>
               <td class="num">${moeda(r.valor)}</td>
-              <td class="num">${r.status !== 'pago' ? `<button class="btn-icone" data-receber="${r.id}" title="Marcar como recebido">${icone('check', 16)}</button>` : ''}</td></tr>`;
+              <td class="num">${r.status !== 'pago' ? `<button class="btn-icone" data-receber="${r.id}" title="Marcar como recebido">${icone('check', 16)}</button>` : botaoRecibo(r)}</td></tr>`;
           }).join('')}</tbody></table></div>` : '<div class="vazio">Nenhuma entrada neste mês.</div>'}
       </div>
 
@@ -144,10 +146,11 @@ function linhaRec(r, comAcao = true) {
     <td>${tagRecebimento(r)}${r.status === 'pago' ? `<div class="fraco">${data(r.pago_em)}${r.forma ? ' · ' + h(r.forma) : ''}</div>` : ''}</td>
     <td class="num">${moeda(r.valor)}</td>
     <td class="num">${comAcao && r.status !== 'pago' ? `<button class="btn btn-peq" data-receber="${r.id}">${icone('check', 14)} Recebido</button>` : ''}
-      <button class="btn-icone" data-editar-rec="${r.id}" title="Editar">${icone('editar', 15)}</button></td></tr>`;
+      ${botaoRecibo(r)}<button class="btn-icone" data-editar-rec="${r.id}" title="Editar">${icone('editar', 15)}</button></td></tr>`;
 }
 
 function ligarRec(area) {
+  ligarRecibos(area);
   area.querySelectorAll('[data-receber]').forEach(b => b.addEventListener('click', async () => {
     await tentar(() => marcarRecebido(porId('recebimentos', b.dataset.receber))); nav.recarregar();
   }));

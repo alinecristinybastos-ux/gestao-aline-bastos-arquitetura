@@ -30,6 +30,8 @@ alter table clientes add column if not exists responsaveis jsonb default '[]'::j
 alter table clientes add column if not exists familia jsonb default '[]'::jsonb;
 
 -- ---------- PROJETOS ----------
+alter table if exists projetos add column if not exists contrato_assinado boolean default false;
+
 create table if not exists projetos (
   id uuid primary key default gen_random_uuid(),
   codigo text,
@@ -45,6 +47,7 @@ create table if not exists projetos (
   data_inicio date,
   data_prevista date,
   status text default 'ativo', -- ativo | pausado | concluido | cancelado
+  contrato_assinado boolean default false,
   contrato_path text,
   contrato_nome text,
   observacoes text,
@@ -216,6 +219,13 @@ create table if not exists despesas (
 );
 create index if not exists idx_desp_venc on despesas(vencimento);
 
+-- ---------- CONFIGURAÇÕES (dados do recibo: assinatura, CPF, PIX) ----------
+create table if not exists config (
+  id text primary key,
+  dados jsonb,
+  atualizado_em timestamptz default now()
+);
+
 -- ---------- TAREFAS DA EQUIPE ----------
 create table if not exists tarefas (
   id uuid primary key default gen_random_uuid(),
@@ -258,7 +268,7 @@ alter default privileges in schema public
 do $$
 declare t text;
 begin
-  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','pendencias','servicos','despesas','tarefas','anexos']
+  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','pendencias','servicos','despesas','tarefas','anexos','config']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "equipe_total" on %I', t);

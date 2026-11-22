@@ -1,12 +1,13 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221503';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221503';
-import { EQUIPE } from './config.js?v=202611221503';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221503';
-import { nav } from './nav.js?v=202611221503';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221503';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221509';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221509';
+import { EQUIPE } from './config.js?v=202611221509';
+import { abrirRecibo } from './recibo.js?v=202611221509';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221509';
+import { nav } from './nav.js?v=202611221509';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221509';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -204,7 +205,6 @@ export function formComplementar(c = null, padrao = {}) {
       ajuda: 'Os pagamentos ao parceiro são lançados em Parceiros e abatidos automaticamente' },
     { nome: 'informacoes', rotulo: 'Informações relevantes enviadas ao parceiro', tipo: 'textarea', linhas: 5,
       placeholder: 'Ex.: Base arquitetônica rev. 02; carga extra na laje da piscina; padrão de entrada de energia trifásico…' },
-    { nome: 'arquivos', rotulo: 'Anexar arquivos (plantas, DWG, PDF…)', tipo: 'arquivo', multiplo: true },
     { nome: 'obs', rotulo: 'Observações internas', tipo: 'textarea', linhas: 2 },
   ];
   const m = formModal({
@@ -277,7 +277,6 @@ export function formPagamentoParceiro(pg = null, parceiroId = null) {
       ajuda: saldoAtual != null && !pg ? `Saldo a pagar hoje: ${moeda(saldoAtual)}` : '' },
     { nome: 'forma', rotulo: 'Forma', tipo: 'select', opcoes: ['PIX', 'Transferência', 'Boleto', 'Dinheiro', 'Cheque'].map(o => [o, o]), largura: 'meia' },
     { nome: 'obs', rotulo: 'Observação', largura: 'meia', placeholder: 'Ex.: adiantamento estrutural Residência Costa' },
-    { nome: 'comprovante', rotulo: 'Comprovante (opcional)', tipo: 'arquivo', aceita: '.pdf,image/*' },
   ];
   const m = formModal({
     titulo: pg ? 'Editar pagamento ao parceiro' : 'Lançar pagamento ao parceiro', campos,
@@ -644,9 +643,11 @@ export function formRecebimento(r = null, projetoId) {
       else { d.etapa_id = null; }
       if (d.status === 'pago' && !d.pago_em) d.pago_em = hoje();
       if (d.status !== 'pago') d.pago_em = null;
-      if (r) await atualizar('recebimentos', r.id, d);
-      else await inserir('recebimentos', { ...d, projeto_id: projetoId, ordem: store.recebimentos.length });
+      let reg;
+      if (r) reg = await atualizar('recebimentos', r.id, d);
+      else [reg] = await inserir('recebimentos', { ...d, projeto_id: projetoId, ordem: store.recebimentos.length });
       aviso('Pagamento salvo'); nav.recarregar();
+      if (d.status === 'pago' && r?.status !== 'pago') setTimeout(() => abrirRecibo(reg), 200);
     },
   });
   const f = m.el.querySelector('form');
@@ -673,6 +674,7 @@ export function tagRecebimento(r) {
 export async function marcarRecebido(r) {
   await atualizar('recebimentos', r.id, { status: 'pago', pago_em: hoje() });
   aviso(`${moeda(r.valor)} recebido`, 'dinheiro');
+  setTimeout(() => abrirRecibo(r), 200); // já oferece o recibo em PDF
 }
 
 // ---------------------------------------------------------------- anexos
