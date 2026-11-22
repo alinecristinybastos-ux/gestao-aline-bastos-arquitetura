@@ -5,8 +5,8 @@
 //  Os arquivos anexados (PDFs, imagens) continuam no Supabase; a
 //  planilha traz a lista deles na aba "Anexos".
 // =====================================================================
-import { store, TABELAS, carregarTudo, modoDemo, porId } from './dados.js?v=202611221806';
-import { abrirModal, aviso, icone, hoje, data } from './util.js?v=202611221806';
+import { store, TABELAS, carregarTudo, modoDemo, porId } from './dados.js?v=202611221807';
+import { abrirModal, aviso, icone, hoje, data } from './util.js?v=202611221807';
 
 const CHAVE = 'ab_ultimo_backup';
 const NOMES = {
