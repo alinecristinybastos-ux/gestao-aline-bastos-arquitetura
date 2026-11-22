@@ -1,12 +1,12 @@
 // =====================================================================
 //  CLIENTES — lista e ficha do cliente
 // =====================================================================
-import { store, porId, remover } from '../dados.js?v=202611221707';
-import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221707';
-import { nav } from '../nav.js?v=202611221707';
-import { recebimentosDo } from '../negocio.js?v=202611221707';
-import { formCliente, ehPJ, responsaveisDe, familiaDe, idadeAtual } from '../componentes.js?v=202611221707';
-import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221707';
+import { store, porId, remover } from '../dados.js?v=202611221710';
+import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221710';
+import { nav } from '../nav.js?v=202611221710';
+import { recebimentosDo } from '../negocio.js?v=202611221710';
+import { formCliente, ehPJ, responsaveisDe, familiaDe, idadeAtual } from '../componentes.js?v=202611221710';
+import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221710';
 
 let busca = '';
 
