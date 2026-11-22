@@ -31,6 +31,8 @@
   --alerta-claro: #fbf0d9;
   --ok: #3f6b33;
   --ok-claro: #e3eedd;
+  --laranja: #d9822b;
+  --laranja-claro: #fbeedd;
   --raio: 10px;
   --sombra: 0 1px 2px rgba(37, 50, 25, .06), 0 4px 14px rgba(37, 50, 25, .06);
   --sombra-forte: 0 10px 40px rgba(37, 50, 25, .22);
@@ -440,6 +442,21 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
 
 .lembrete-backup { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; padding: 10px 14px; background: var(--areia-clara); border-color: var(--areia); color: #6a5220; flex-wrap: wrap; }
 .lembrete-backup span { flex: 1; min-width: 200px; font-size: .9rem; }
+
+/* situação do projeto (borda colorida) */
+.cartao-proj.saude-verde, .cartao-proj.saude-laranja, .cartao-proj.saude-vermelho { border-width: 2px; border-left-width: 6px; }
+.saude-verde { border-color: var(--ok) !important; }
+.saude-laranja { border-color: var(--laranja) !important; }
+.saude-vermelho { border-color: var(--perigo) !important; }
+tr.saude-verde td:first-child { box-shadow: inset 5px 0 0 var(--ok); }
+tr.saude-laranja td:first-child { box-shadow: inset 5px 0 0 var(--laranja); }
+tr.saude-vermelho td:first-child { box-shadow: inset 5px 0 0 var(--perigo); }
+.linha-proj.saude-verde, .linha-proj.saude-laranja, .linha-proj.saude-vermelho { border-left: 5px solid; padding-left: 13px; border-bottom-color: var(--linha) !important; }
+.legenda-saude { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+.legenda-saude button { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--linha-forte); background: var(--papel); border-radius: 20px; padding: 5px 12px; cursor: pointer; font-size: .86rem; color: var(--texto-2); }
+.legenda-saude button.ativo { border-color: var(--verde-escuro); color: var(--texto); box-shadow: 0 0 0 2px rgba(37, 50, 25, .12); }
+.legenda-saude i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.legenda-saude b { font-weight: 400; color: var(--texto); }
 
 /* ---------------------------------------------------------------- modal */
 .modal-fundo { position: fixed; inset: 0; background: rgba(23, 31, 16, .45); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; z-index: 50; overflow-y: auto; animation: aparecer .15s ease-out; }

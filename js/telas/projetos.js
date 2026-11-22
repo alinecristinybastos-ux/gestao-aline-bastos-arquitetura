@@ -1,18 +1,18 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611221700';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221700';
-import { nav } from '../nav.js?v=202611221700';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611221700';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221700';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221700';
+import { store, atualizar } from '../dados.js?v=202611221702';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221702';
+import { nav } from '../nav.js?v=202611221702';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611221702';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas, saudeProjeto, NOMES_SAUDE } from '../negocio.js?v=202611221702';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221702';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };
 
 let visao = 'quadro';
-let filtro = { busca: '', categoria: '', status: 'abertos' };
+let filtro = { busca: '', categoria: '', status: 'abertos', saude: '' };
 try { visao = localStorage.getItem('ab_visao_projetos') || 'quadro'; } catch { /* ignora */ }
 
 export function prazoFinal(p) {
@@ -34,7 +34,8 @@ export function esperaTag(pid) {
 export function cartaoProjeto(p) {
   const f = faseAtual(p.id);
   const pr = progressoProjeto(p.id);
-  return `<div class="cartao-proj" data-proj="${p.id}">
+  const sd = saudeProjeto(p);
+  return `<div class="cartao-proj saude-${sd.cor}" data-proj="${p.id}" title="${h(NOMES_SAUDE[sd.cor] || '')}: ${h(sd.motivos.join(' · '))}">
     <div class="cod">${h(p.codigo || '')}${p.status === 'pausado' ? ' · <span class="tag tag-alerta">Pausado</span>' : ''}</div>
     <h4>${h(p.nome)}</h4>
     <div class="cli">${h(nomeCliente(p.cliente_id))}</div>
@@ -46,12 +47,24 @@ export function cartaoProjeto(p) {
   </div>`;
 }
 
+function legendaSaude() {
+  const base = store.projetos.filter(p => ['ativo', 'pausado'].includes(p.status));
+  const n = { verde: 0, laranja: 0, vermelho: 0 };
+  base.forEach(p => { const c = saudeProjeto(p).cor; if (c in n) n[c]++; });
+  const cores = { verde: 'var(--ok)', laranja: 'var(--laranja)', vermelho: 'var(--perigo)' };
+  return `<div class="legenda-saude">
+    ${Object.entries(NOMES_SAUDE).map(([k, nome]) => `<button data-saude="${k}" class="${filtro.saude === k ? 'ativo' : ''}" title="Mostrar só estes"><i style="background:${cores[k]}"></i>${nome} <b>${n[k]}</b></button>`).join('')}
+    ${filtro.saude ? '<button data-saude="">Mostrar todos</button>' : '<span class="fraco" style="font-size:.82rem">passe o mouse no cartão para ver o motivo</span>'}
+  </div>`;
+}
+
 function filtrar() {
   const b = filtro.busca.toLowerCase();
   return store.projetos.filter(p => {
     if (filtro.categoria && p.categoria !== filtro.categoria) return false;
     if (filtro.status === 'abertos' && !['ativo', 'pausado'].includes(p.status)) return false;
     if (filtro.status && filtro.status !== 'abertos' && p.status !== filtro.status) return false;
+    if (filtro.saude && saudeProjeto(p).cor !== filtro.saude) return false;
     if (b && !`${p.nome} ${p.codigo} ${nomeCliente(p.cliente_id)} ${p.endereco_obra || ''}`.toLowerCase().includes(b)) return false;
     return true;
   }).sort((a, b) => String(prazoFinal(a) || '9999').localeCompare(String(prazoFinal(b) || '9999')));
@@ -71,7 +84,8 @@ function listaHTML(lista) {
     <thead><tr><th>Projeto</th><th>Cliente</th><th>Fase atual</th><th style="width:150px">Progresso</th><th>Prazo final</th><th>Situação</th><th class="num">Contrato</th></tr></thead>
     <tbody>${lista.map(p => {
       const f = faseAtual(p.id); const pr = progressoProjeto(p.id);
-      return `<tr class="clicavel" data-proj="${p.id}">
+      const sd = saudeProjeto(p);
+      return `<tr class="clicavel saude-${sd.cor}" data-proj="${p.id}" title="${h(sd.motivos.join(' · '))}">
         <td><div>${h(p.nome)}</div><div class="fraco">${h(p.codigo || '')} · ${h(descricaoTipo(p))}</div></td>
         <td>${h(nomeCliente(p.cliente_id))}</td>
         <td>${f ? h(f.nome) : '<span class="fraco">Concluído</span>'}${esperaTag(p.id)}</td>
@@ -100,6 +114,7 @@ export function render(el) {
       <select id="f-cat"><option value="">Todos os tipos</option>${Object.entries(CATEGORIAS).map(([k, v]) => `<option value="${k}" ${filtro.categoria === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
       <select id="f-status">${[['abertos', 'Em andamento e pausados'], ['ativo', 'Em andamento'], ['pausado', 'Pausados'], ['concluido', 'Concluídos'], ['cancelado', 'Cancelados'], ['', 'Todos']].map(([k, v]) => `<option value="${k}" ${filtro.status === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
     </div>
+    ${legendaSaude()}
     <div id="area-proj">${visao === 'quadro' ? quadroHTML(lista) : listaHTML(lista)}</div>`;
 
   el.querySelectorAll('[data-visao]').forEach(b => b.addEventListener('click', () => {
@@ -114,6 +129,9 @@ export function render(el) {
     el.querySelector('#area-proj').innerHTML = visao === 'quadro' ? quadroHTML(l) : listaHTML(l);
     ligarCartoes(el);
   });
+  el.querySelectorAll('[data-saude]').forEach(b => b.addEventListener('click', () => {
+    filtro.saude = filtro.saude === b.dataset.saude ? '' : b.dataset.saude; render(el);
+  }));
   el.querySelector('#f-cat').addEventListener('change', e => { filtro.categoria = e.target.value; render(el); });
   el.querySelector('#f-status').addEventListener('change', e => { filtro.status = e.target.value; render(el); });
   ligarCartoes(el);

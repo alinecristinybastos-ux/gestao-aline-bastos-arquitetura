@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js?v=202611221700';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221700';
-import { nav } from '../nav.js?v=202611221700';
-import { ESCRITORIO } from '../config.js?v=202611221700';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221700';
-import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221700';
-import { novoProjeto } from './projetos.js?v=202611221700';
+import { store, porId } from '../dados.js?v=202611221702';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221702';
+import { nav } from '../nav.js?v=202611221702';
+import { ESCRITORIO } from '../config.js?v=202611221702';
+import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas, saudeProjeto } from '../negocio.js?v=202611221702';
+import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221702';
+import { novoProjeto } from './projetos.js?v=202611221702';
 
 function saudacao() {
   const hr = new Date().getHours();
@@ -79,7 +79,7 @@ export function render(el) {
           <div class="cartao-cab"><h2>Projetos em andamento</h2><a href="#/projetos" class="btn btn-peq btn-leve">Ver quadro ${icone('seta', 14)}</a></div>
           ${ativos.length ? ativos.map(p => ({ p, f: faseAtual(p.id), pr: progressoProjeto(p.id) }))
             .sort((a, b) => String(a.f?.prazo || '9').localeCompare(String(b.f?.prazo || '9')))
-            .map(({ p, f, pr }) => `<div class="linha-proj" data-ir="projeto/${p.id}">
+            .map(({ p, f, pr }) => `<div class="linha-proj saude-${saudeProjeto(p).cor}" data-ir="projeto/${p.id}" title="${h(saudeProjeto(p).motivos.join(' · '))}">
               <div style="min-width:0"><div class="nome">${h(p.nome)}</div>
                 <div class="det">${h(nomeCliente(p.cliente_id))} · <span style="color:var(--verde)">${h(f ? f.nome : 'Etapas concluídas')}</span>${aguardandoParceiros(p.id) ? ` · <span style="color:var(--terracota)">aguardando parceiros (${aguardandoParceiros(p.id).recebidos}/${aguardandoParceiros(p.id).total})</span>` : ''}</div></div>
               <div><div class="progresso"><span style="width:${pr.pct}%"></span></div><div class="pct">${pr.pct}% · etapa ${pr.etapasFeitas + 1 > pr.etapas ? pr.etapas : pr.etapasFeitas + 1} de ${pr.etapas}</div></div>

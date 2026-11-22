@@ -2,9 +2,9 @@
 //  Regras do escritório: criação de projeto, fases, progresso,
 //  situação dos recebimentos e dos complementares.
 // =====================================================================
-import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221700';
-import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221700';
-import { hoje, diasAte } from './util.js?v=202611221700';
+import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221702';
+import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221702';
+import { hoje, diasAte } from './util.js?v=202611221702';
 
 export const nomeCliente = (id) => porId('clientes', id)?.nome || 'Sem cliente';
 export const nomeParceiro = (id) => porId('parceiros', id)?.nome || 'A definir';
@@ -127,6 +127,30 @@ export function aguardandoParceiros(pid) {
   const esp = esperaComplementares(pid);
   return esp.pendentes.length ? esp : null;
 }
+
+/**
+ * Cor de situação do projeto (borda dos cartões):
+ * vermelho = etapa atual com prazo vencido
+ * laranja  = aguardando cliente / parceiros / contrato assinado / cobrança liberada
+ * verde    = tudo certo
+ */
+export function saudeProjeto(p) {
+  if (!['ativo', 'pausado'].includes(p.status)) return { cor: 'neutro', motivos: [] };
+  const motivos = [];
+  const f = faseAtual(p.id);
+  const atrasado = f?.prazo && diasAte(f.prazo) < 0;
+  if (atrasado) motivos.push(`Etapa "${f.nome}" atrasada ${-diasAte(f.prazo)} dia(s)`);
+  const pend = pendenciasAbertas(p.id);
+  if (pend.length) motivos.push(`Aguardando cliente: ${pend.map(x => x.descricao).join('; ')}`);
+  const esp = aguardandoParceiros(p.id);
+  if (esp) motivos.push(`Aguardando parceiros (${esp.recebidos}/${esp.total} recebidos)`);
+  if (!p.contrato_assinado) motivos.push('Contrato assinado ainda não recebido');
+  const cobrar = store.recebimentos.filter(r => r.projeto_id === p.id && ['liberado', 'atrasado'].includes(situacaoRecebimento(r).cod));
+  if (cobrar.length) motivos.push(`Pagamento para cobrar: ${cobrar.map(r => r.descricao).join(', ')}`);
+  const cor = atrasado ? 'vermelho' : motivos.length ? 'laranja' : 'verde';
+  return { cor, motivos: motivos.length ? motivos : ['Tudo em dia'] };
+}
+export const NOMES_SAUDE = { verde: 'Tudo certo', laranja: 'Aguardando', vermelho: 'Em atraso' };
 
 export function complAtrasado(c) { return c.status !== 'entregue' && c.prazo && diasAte(c.prazo) < 0; }
 
