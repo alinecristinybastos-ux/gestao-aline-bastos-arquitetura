@@ -1,0 +1,9 @@
+{
+  "name": "Gestão Aline Bastos Arquitetura",
+  "short_name": "Aline Bastos",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f5ef",
+  "theme_color": "#253219",
+  "icons": [{ "src": "assets/icone-app.png", "sizes": "512x512", "type": "image/png" }]
+}
