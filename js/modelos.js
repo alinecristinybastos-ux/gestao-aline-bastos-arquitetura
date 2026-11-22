@@ -19,6 +19,7 @@ export const TIPOS = {
     residencial: 'Residencial',
     comercial: 'Comercial',
     industrial: 'Industrial',
+    misto: 'Misto (residencial + comercial)',
     paginacao_piso: 'Paginação de piso',
     forro: 'Projeto de forro',
   },
@@ -26,16 +27,21 @@ export const TIPOS = {
     residencial: 'Interiores residencial',
     comercial: 'Interiores comercial',
     industrial: 'Interiores industrial',
+    misto: 'Interiores misto',
   },
   complementares: {
     complementares: 'Complementares (parceiros)',
   },
 };
 
-export const INTERVENCOES = { novo: 'Novo', reforma: 'Reforma', ampliacao: 'Ampliação' };
+export const INTERVENCOES = { novo: 'Novo', reforma: 'Reforma', ampliacao: 'Ampliação', legalizacao: 'Legalização' };
 
-// tipos que pedem novo / reforma / ampliação
-export const TIPOS_COM_INTERVENCAO = ['residencial', 'comercial', 'industrial'];
+// tipos que pedem novo / reforma / ampliação / legalização
+export const TIPOS_COM_INTERVENCAO = ['residencial', 'comercial', 'industrial', 'misto'];
+
+/** Intervenções possíveis em cada categoria (legalização só no arquitetônico). */
+export const intervencoesDa = (categoria) => Object.fromEntries(Object.entries(INTERVENCOES)
+  .filter(([k]) => k !== 'legalizacao' || categoria === 'arquitetonico'));
 
 // Complementares que o escritório contrata com os engenheiros parceiros
 // (aparecem para marcar no cadastro do projeto)
@@ -281,6 +287,9 @@ function arquitetonicoCompleto(tipo, intervencao) {
   if (tipo === 'comercial') {
     brief.grupos['1.6 Requisitos comerciais'] = 'Definir atividade e público do estabelecimento|Levantar identidade visual da marca|Definir fluxo de atendimento e de serviço|Verificar exigências da Vigilância Sanitária, se aplicável|Verificar acessibilidade (NBR 9050)|Verificar exigências para alvará de funcionamento';
   }
+  if (tipo === 'misto') {
+    brief.grupos['1.6 Requisitos de uso misto'] = 'Definir os usos de cada pavimento ou área (residencial e comercial)|Verificar se o zoneamento permite o uso misto|Separar acessos e circulações do residencial e do comercial|Prever medições individualizadas de água e energia|Verificar vagas exigidas para cada uso|Verificar exigências de acessibilidade (NBR 9050) na parte comercial|Verificar exigências da Vigilância Sanitária e do alvará de funcionamento, se aplicável|Verificar exigências do Corpo de Bombeiros para o uso misto';
+  }
   if (tipo === 'industrial') {
     brief.grupos['1.6 Requisitos industriais'] = 'Levantar o processo e o fluxo produtivo|Levantar layout de máquinas e equipamentos|Verificar cargas de piso e pé-direito necessários|Prever áreas de carga e descarga e circulação de veículos|Verificar vestiários e sanitários (NR-24)|Verificar exigências de segurança do trabalho (NRs aplicáveis)|Verificar licenciamento ambiental|Verificar exigências do Corpo de Bombeiros para a atividade';
   }
@@ -299,6 +308,9 @@ function interioresCompleto(tipo, intervencao) {
   }
   if (tipo === 'comercial') {
     brief.grupos['1.3 Requisitos comerciais'] = 'Levantar identidade visual da marca|Definir fluxo de atendimento e de clientes|Definir áreas de exposição de produtos|Verificar acessibilidade (NBR 9050)|Verificar exigências da Vigilância Sanitária, se aplicável';
+  }
+  if (tipo === 'misto') {
+    brief.grupos['1.3 Requisitos de uso misto'] = 'Separar as necessidades da parte residencial e da parte comercial|Levantar identidade visual da marca (parte comercial)|Definir fluxo de atendimento e de clientes|Garantir privacidade da área residencial|Verificar acessibilidade (NBR 9050) na parte comercial';
   }
   if (tipo === 'industrial') {
     brief.grupos['1.3 Requisitos industriais'] = 'Levantar áreas administrativas, refeitório e vestiários|Verificar ergonomia dos postos de trabalho (NR-17)|Verificar condições sanitárias e de conforto (NR-24)|Definir materiais de alta resistência e fácil limpeza|Verificar exigências do Corpo de Bombeiros';
@@ -345,12 +357,48 @@ function complementares() {
   }, clonar(COMPATIBILIZACAO_ARQ), clonar(REVISAO), clonar(ENTREGA)];
 }
 
+// Legalização (regularização) de edificação existente
+function legalizacao(tipo) {
+  const etapas = [clonar(CONTRATACAO), {
+    chave: 'briefing', nome: 'Levantamento da edificação existente', dias: 10,
+    entrega: 'Edificação medida, fotografada e documentação reunida.',
+    grupos: {
+      'Documentação': 'Matrícula / escritura do imóvel atualizada|IPTU / inscrição imobiliária|Documentos do proprietário|Projeto aprovado anterior, alvará ou habite-se, se houver|Levantamento topográfico, se necessário|Notificações ou autos da prefeitura, se houver',
+      'Levantamento cadastral': 'Medir toda a edificação (as built)|Medir o terreno e conferir com a matrícula|Registrar afastamentos existentes|Registrar níveis e pés-direitos|Identificar usos de cada ambiente|Realizar levantamento fotográfico completo',
+    },
+  }, {
+    chave: 'viabilidade', nome: 'Análise da legislação e viabilidade da regularização', dias: 7,
+    entrega: 'Relatório do que é regularizável e das adequações necessárias.',
+    grupos: {
+      'Legislação': 'Consultar Plano Diretor e zoneamento|Consultar Código de Obras municipal|Verificar lei de regularização / anistia vigente, se houver|Conferir taxa de ocupação e coeficiente de aproveitamento|Conferir afastamentos e recuos|Conferir taxa de permeabilidade|Verificar vagas exigidas|Verificar acessibilidade e exigências do Corpo de Bombeiros',
+      'Conclusão': 'Listar irregularidades encontradas|Definir adequações necessárias (obras ou demolições)|Estimar taxas e multas da prefeitura|Apresentar a análise ao cliente|Aprovação do cliente para seguir',
+    },
+  }, {
+    chave: 'executivo', nome: 'Projeto de legalização (as built)', dias: 15,
+    entrega: 'Pranchas de legalização prontas para protocolo.',
+    grupos: {
+      'Pranchas': 'Planta de situação|Planta de locação / implantação|Plantas baixas da edificação existente|Cortes|Fachadas|Planta de cobertura|Quadro de áreas (existente / a regularizar)|Indicação de adequações, se houver',
+      'Documentos': 'Memorial descritivo|RRT de legalização|Formulários e requerimentos da prefeitura|Assinaturas do proprietário',
+    },
+  }, {
+    chave: 'licenciamento', nome: 'Protocolo e acompanhamento na prefeitura', dias: 60,
+    entrega: 'Regularização aprovada pela prefeitura.',
+    grupos: {
+      'Prefeitura': 'Protocolar o processo|Pagar / orientar o pagamento das taxas|Acompanhar o andamento do processo|Responder às exigências (comunique-se)|Corrigir pranchas, se solicitado|Vistoria da prefeitura|Aprovação do projeto|Emissão do alvará / habite-se / certidão de regularização',
+    },
+  }, clonar(ENTREGA)];
+  if (tipo === 'comercial' || tipo === 'misto') etapas[2].grupos['Legislação'] += '|Verificar exigências para alvará de funcionamento e Vigilância Sanitária';
+  if (tipo === 'industrial') etapas[2].grupos['Legislação'] += '|Verificar licenciamento ambiental|Verificar exigências de segurança do trabalho (NRs aplicáveis)';
+  return etapas;
+}
+
 /** Retorna a lista de etapas (com grupos de itens) para o tipo escolhido. */
 export function montarModelo(categoria, tipo, intervencao) {
   if (categoria === 'interiores') return interioresCompleto(tipo, intervencao);
   if (categoria === 'complementares') return complementares();
   if (tipo === 'paginacao_piso') return paginacaoPiso();
   if (tipo === 'forro') return forro();
+  if (intervencao === 'legalizacao') return legalizacao(tipo);
   return arquitetonicoCompleto(tipo, intervencao);
 }
 
@@ -358,6 +406,12 @@ export function montarModelo(categoria, tipo, intervencao) {
 export function itensDoGrupo(txt) { return String(txt).split('|').map(s => s.trim()).filter(Boolean); }
 
 // Pagamentos padrão do escritório (percentuais editáveis no cadastro)
+export const pagamentosPadrao = (intervencao) => intervencao === 'legalizacao' ? [
+  { descricao: 'Entrada (assinatura do contrato)', pct: 40, gatilho: 'etapa', chave: 'contratacao' },
+  { descricao: 'Protocolo na prefeitura', pct: 30, gatilho: 'etapa', chave: 'executivo' },
+  { descricao: 'Aprovação / entrega final', pct: 30, gatilho: 'etapa', chave: 'licenciamento' },
+] : PAGAMENTOS_PADRAO;
+
 export const PAGAMENTOS_PADRAO = [
   { descricao: 'Entrada (assinatura do contrato)', pct: 30, gatilho: 'etapa', chave: 'contratacao' },
   { descricao: 'Apresentação do 3D / estudo preliminar', pct: 30, gatilho: 'etapa', chave: 'estudo' },

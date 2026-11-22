@@ -1,12 +1,12 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611221509';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221509';
-import { nav } from '../nav.js?v=202611221509';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO, infoServico } from '../modelos.js?v=202611221509';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221509';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221509';
+import { store, atualizar } from '../dados.js?v=202611221511';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221511';
+import { nav } from '../nav.js?v=202611221511';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611221511';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221511';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221511';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };
@@ -164,7 +164,7 @@ export function novoProjeto(pre = {}) {
   function gerarPagamentos() {
     const total = Number(st.valor_contrato) || 0;
     const incl = st.etapas.map((e, i) => ({ e, i })).filter(x => x.e.incluir);
-    st.pagamentos = PAGAMENTOS_PADRAO.map(pg => {
+    st.pagamentos = pagamentosPadrao(precisaIntervencao() ? st.intervencao : null).map(pg => {
       const alvo = incl.find(x => x.e.chave === pg.chave) || incl[incl.length - 1];
       return { descricao: pg.descricao, pct: pg.pct, valor: +(total * pg.pct / 100).toFixed(2), gatilho: 'etapa', etapaIndice: alvo?.i ?? 0, vencimento: '' };
     });
@@ -193,7 +193,7 @@ export function novoProjeto(pre = {}) {
       ${st.categoria !== 'complementares' ? `<div class="rotulo-sec">Tipo</div>
       <div class="chips">${Object.entries(tipos).map(([k, v]) => `<button type="button" class="chip ${st.tipo === k ? 'sel' : ''}" data-tipo="${k}">${v}</button>`).join('')}</div>` : ''}
       ${precisaIntervencao() ? `<div class="rotulo-sec">Intervenção</div>
-      <div class="chips">${Object.entries(INTERVENCOES).map(([k, v]) => `<button type="button" class="chip ${st.intervencao === k ? 'sel' : ''}" data-interv="${k}">${v}</button>`).join('')}</div>` : ''}
+      <div class="chips">${Object.entries(intervencoesDa(st.categoria)).map(([k, v]) => `<button type="button" class="chip ${st.intervencao === k ? 'sel' : ''}" data-interv="${k}">${v}</button>`).join('')}</div>` : ''}
       <div class="rotulo-sec" style="margin-top:6px">Serviços adicionais contratados <span class="fraco">(se houver)</span></div>
       ${chipsServicos(st.servicos)}
       <div class="rotulo-sec" style="margin-top:6px">Projetos complementares contratados pelo cliente ${st.categoria === 'complementares' ? '<span class="obrig">*</span>' : '<span class="fraco">(se houver)</span>'}</div>
@@ -269,7 +269,9 @@ export function novoProjeto(pre = {}) {
     }
     if (st.passo === 2) {
       corpo.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
-        st.categoria = b.dataset.cat; st.tipo = Object.keys(TIPOS[st.categoria])[0]; st.etapas = null; desenhar();
+        st.categoria = b.dataset.cat; st.tipo = Object.keys(TIPOS[st.categoria])[0]; st.etapas = null;
+        if (!intervencoesDa(st.categoria)[st.intervencao]) st.intervencao = 'novo';
+        desenhar();
       }));
       corpo.querySelectorAll('[data-tipo]').forEach(b => b.addEventListener('click', () => { st.tipo = b.dataset.tipo; st.etapas = null; desenhar(); }));
       corpo.querySelectorAll('[data-interv]').forEach(b => b.addEventListener('click', () => { st.intervencao = b.dataset.interv; st.etapas = null; desenhar(); }));

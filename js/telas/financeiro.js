@@ -2,12 +2,12 @@
 //  FINANCEIRO — resumo do mês (receitas, despesas e resultado),
 //  a receber, recebidos, parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221509';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221509';
-import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611221509';
-import { nav } from '../nav.js?v=202611221509';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro } from '../negocio.js?v=202611221509';
-import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa } from '../componentes.js?v=202611221509';
+import { store, porId, atualizar } from '../dados.js?v=202611221511';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221511';
+import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611221511';
+import { nav } from '../nav.js?v=202611221511';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro } from '../negocio.js?v=202611221511';
+import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa } from '../componentes.js?v=202611221511';
 
 let aba = 'mes';
 let mesSel = hoje().slice(0, 7);

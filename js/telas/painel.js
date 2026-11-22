@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js?v=202611221509';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221509';
-import { nav } from '../nav.js?v=202611221509';
-import { ESCRITORIO } from '../config.js?v=202611221509';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221509';
-import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221509';
-import { novoProjeto } from './projetos.js?v=202611221509';
+import { store, porId } from '../dados.js?v=202611221511';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221511';
+import { nav } from '../nav.js?v=202611221511';
+import { ESCRITORIO } from '../config.js?v=202611221511';
+import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221511';
+import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221511';
+import { novoProjeto } from './projetos.js?v=202611221511';
 
 function saudacao() {
   const hr = new Date().getHours();
