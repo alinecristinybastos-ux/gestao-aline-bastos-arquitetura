@@ -1,13 +1,13 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221742';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221742';
-import { EQUIPE } from './config.js?v=202611221742';
-import { abrirRecibo } from './recibo.js?v=202611221742';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221742';
-import { nav } from './nav.js?v=202611221742';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221742';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221748';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221748';
+import { EQUIPE } from './config.js?v=202611221748';
+import { abrirRecibo } from './recibo.js?v=202611221748';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221748';
+import { nav } from './nav.js?v=202611221748';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221748';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -167,7 +167,8 @@ export function formParceiro(parceiro = null, aoSalvar) {
 }
 
 // ---------------------------------------------------------------- tarefa
-export const TIPOS_TAREFA = { tarefa: 'Tarefa', projeto: 'Trabalhar no projeto', reuniao: 'Reunião' };
+export const TIPOS_TAREFA = { tarefa: 'Tarefa (no escritório)', reuniao: 'Reunião', visita: 'Visita (fora do escritório)', projeto: 'Trabalhar no projeto' };
+const COM_HORARIO = ['reuniao', 'visita'];
 
 export function formTarefa(tarefa = null, padrao = {}) {
   const campos = [
@@ -176,7 +177,9 @@ export function formTarefa(tarefa = null, padrao = {}) {
     { nome: 'projeto_id', rotulo: 'Projeto', tipo: 'select', opcoes: opcoesProjetos(false), vazio: 'Nenhum (geral)' },
     { nome: 'titulo', rotulo: 'Título', obrigatorio: true, placeholder: 'Ex.: Renderizar 3D da sala; Reunião de apresentação…' },
     { nome: 'dia', rotulo: 'Dia programado', tipo: 'date', largura: 'terco', ajuda: 'Dia da semana em que será feito' },
-    { nome: 'hora', rotulo: 'Horário', tipo: 'time', largura: 'terco' },
+    { nome: 'hora', rotulo: 'Início', tipo: 'time', largura: 'terco' },
+    { nome: 'hora_fim', rotulo: 'Término', tipo: 'time', largura: 'terco' },
+    { nome: 'local', rotulo: 'Endereço / local', placeholder: 'Endereço da obra, loja, escritório do cliente…' },
     { nome: 'prazo', rotulo: 'Prazo final', tipo: 'date', largura: 'terco' },
     { nome: 'prioridade', rotulo: 'Prioridade', tipo: 'select', vazio: false, opcoes: [['alta', 'Alta'], ['media', 'Média'], ['baixa', 'Baixa']], largura: 'meia' },
     { nome: 'status', rotulo: 'Situação', tipo: 'select', vazio: false, opcoes: [['afazer', 'A fazer'], ['fazendo', 'Fazendo'], ['feito', 'Feito']], largura: 'meia' },
@@ -187,7 +190,8 @@ export function formTarefa(tarefa = null, padrao = {}) {
     valores: tarefa ? { tipo: 'tarefa', ...tarefa } : { tipo: 'tarefa', prioridade: 'media', status: 'afazer', responsavel: EQUIPE[0], ...padrao },
     extraRodape: tarefa ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
     onSalvar: async (d) => {
-      if (d.tipo !== 'reuniao' && !d.hora) d.hora = null;
+      if (!COM_HORARIO.includes(d.tipo)) { d.hora = null; d.hora_fim = null; }
+      if (d.tipo === 'tarefa' && !d.local) d.local = null;
       if (tarefa) await atualizar('tarefas', tarefa.id, d);
       else await inserir('tarefas', { ...d, ordem: 0 });
       aviso('Salvo'); nav.recarregar();
@@ -203,8 +207,10 @@ export function formTarefa(tarefa = null, padrao = {}) {
   };
   const ajustar = () => {
     const tipo = f.tipo.value;
-    f.hora.closest('.campo').classList.toggle('oculto', tipo !== 'reuniao');
-    f.titulo.placeholder = tipo === 'reuniao' ? 'Ex.: Reunião de apresentação do 3D' : tipo === 'projeto' ? 'Escolha o projeto acima' : 'Ex.: Renderizar 3D da sala';
+    const comHora = COM_HORARIO.includes(tipo);
+    ['hora', 'hora_fim', 'local'].forEach(n => f[n].closest('.campo').classList.toggle('oculto', !comHora));
+    f.titulo.placeholder = tipo === 'reuniao' ? 'Ex.: Reunião de apresentação do 3D' : tipo === 'visita' ? 'Ex.: Visita à obra — conferir marcação' : tipo === 'projeto' ? 'Escolha o projeto acima' : 'Ex.: Enviar orçamento, ligar para fornecedor…';
+    if (tipo === 'visita' && !f.local.value) { const p = porId('projetos', f.projeto_id.value); if (p?.endereco_obra) f.local.value = p.endereco_obra; }
     if (tipo === 'projeto' && (!f.titulo.value || f.titulo.value === tituloAuto)) { tituloAuto = tituloDoProjeto(); f.titulo.value = tituloAuto; }
   };
   f.tipo.addEventListener('change', ajustar);

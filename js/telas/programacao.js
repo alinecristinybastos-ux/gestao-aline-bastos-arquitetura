@@ -5,12 +5,12 @@
 //  ir para vários dias. Reuniões podem ser marcadas em cada dia.
 //  Cada dia programado é um registro em "tarefas" com tipo 'projeto'.
 // =====================================================================
-import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221742';
-import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221742';
-import { nav } from '../nav.js?v=202611221742';
-import { EQUIPE } from '../config.js?v=202611221742';
-import { formTarefa } from '../componentes.js?v=202611221742';
-import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas, aguardandoParceiros } from '../negocio.js?v=202611221742';
+import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221748';
+import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221748';
+import { nav } from '../nav.js?v=202611221748';
+import { EQUIPE } from '../config.js?v=202611221748';
+import { formTarefa } from '../componentes.js?v=202611221748';
+import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas, aguardandoParceiros } from '../negocio.js?v=202611221748';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -50,14 +50,17 @@ const setas = (t) => `<div class="setas-prog"><button class="btn-icone" data-mov
 
 function cartaoDia(t) {
   const feito = t.status === 'feito';
-  if (t.tipo === 'reuniao') {
+  if (t.tipo === 'reuniao' || t.tipo === 'visita') {
     const p = porId('projetos', t.projeto_id);
-    return `<div class="cartao-prog tipo-reuniao ${feito ? 'feito' : ''}" draggable="true" data-item="${t.id}">
+    const visita = t.tipo === 'visita';
+    const horario = [t.hora, t.hora_fim].filter(Boolean).join('–');
+    return `<div class="cartao-prog tipo-${t.tipo} ${feito ? 'feito' : ''}" draggable="true" data-item="${t.id}">
       <button class="caixa-prog" data-feito="${t.id}" title="${feito ? 'Desmarcar' : 'Feita'}">${feito ? icone('check', 13) : ''}</button>
       <div class="corpo-prog" data-editar="${t.id}">
-        <div class="hora-prog">${icone('clientes', 12)} ${h(t.hora || 'Reunião')}</div>
+        <div class="hora-prog" title="${visita ? 'Visita fora do escritório' : 'Reunião'}">${icone(visita ? 'local' : 'clientes', 12)} ${h(horario || (visita ? 'Visita' : 'Reunião'))}</div>
         <div class="tit-prog">${h(t.titulo)}</div>
         ${p ? `<div class="sub-prog">${h(nomeCliente(p.cliente_id))} — ${h(p.nome)}</div>` : ''}
+        ${t.local ? `<div class="sub-prog local-prog">${icone('local', 11)} ${h(t.local)}</div>` : ''}
       </div>
       ${setas(t)}
     </div>`;
@@ -98,7 +101,7 @@ function posicaoNaColuna(col, y, ignorarId) {
   return { indice: i === -1 ? cards.length : i, antes: i === -1 ? null : cards[i] };
 }
 
-const ehPlanejamento = (t) => t.tipo === 'projeto' || t.tipo === 'reuniao';
+const ehPlanejamento = (t) => t.tipo === 'projeto' || t.tipo === 'reuniao' || t.tipo === 'visita';
 
 // ---------------------------------------------------------------- tela
 export function render(el) {
@@ -120,10 +123,11 @@ export function render(el) {
   const nParc = aguardando.filter(p => !pendenciasAbertas(p.id).length).length;
   const nProj = daSemana.filter(t => t.tipo === 'projeto').length;
   const nReu = daSemana.filter(t => t.tipo === 'reuniao').length;
+  const nVis = daSemana.filter(t => t.tipo === 'visita').length;
 
   el.innerHTML = `
     <div class="cab"><div class="titulos"><h1>Programação semanal</h1>
-      <div class="sub">${nProj || nReu ? `${nProj} período${nProj === 1 ? '' : 's'} de projeto · ${nReu} ${nReu === 1 ? 'reunião' : 'reuniões'} nesta semana` : 'Arraste os projetos da coluna da esquerda para os dias da semana'}</div></div>
+      <div class="sub">${nProj || nReu || nVis ? `${nProj} período${nProj === 1 ? '' : 's'} de projeto · ${nReu} ${nReu === 1 ? 'reunião' : 'reuniões'} · ${nVis} visita${nVis === 1 ? '' : 's'} fora do escritório` : 'Arraste os projetos da coluna da esquerda para os dias da semana'}</div></div>
       <div class="acoes">
         <div class="grupo-botoes">${EQUIPE.map(n => `<button data-pessoa="${h(n)}" class="${pessoa === n ? 'ativo' : ''}">${h(n)}</button>`).join('')}</div>
       </div></div>
@@ -146,8 +150,9 @@ export function render(el) {
         const ehHoje = d.iso === hoje();
         return `<div class="coluna ${ehHoje ? 'col-hoje' : ''} ${d.iso < hoje() ? 'col-passado' : ''}" data-dia="${d.iso}">
           <div class="coluna-cab"><strong>${d.nome}</strong><span class="data-col">${curta(d.iso)}${ehHoje ? ' · hoje' : ''}</span><span class="n">${itens.length}</span></div>
+          ${itens.filter(t => t.tipo === 'visita').length ? `<div class="fora-dia" title="Visitas fora do escritório neste dia">${icone('local', 12)} fora ${itens.filter(t => t.tipo === 'visita').map(t => [t.hora, t.hora_fim].filter(Boolean).join('–') || 'dia').join(', ')}</div>` : ''}
           ${itens.map(cartaoDia).join('')}
-          <button class="btn btn-leve add-col" data-reuniao="${d.iso}">${icone('mais', 14)} Reunião</button>
+          <div class="add-col add-duplo"><button class="btn btn-leve" data-reuniao="${d.iso}">${icone('mais', 13)} Reunião</button><button class="btn btn-leve" data-visita="${d.iso}">${icone('mais', 13)} Visita</button></div>
         </div>`;
       }).join('')}
     </div>`;
@@ -167,6 +172,8 @@ export function render(el) {
   // ações dos cartões
   el.querySelectorAll('[data-reuniao]').forEach(b => b.addEventListener('click', () =>
     formTarefa(null, { responsavel: pessoa, dia: b.dataset.reuniao, tipo: 'reuniao', titulo: '' })));
+  el.querySelectorAll('[data-visita]').forEach(b => b.addEventListener('click', () =>
+    formTarefa(null, { responsavel: pessoa, dia: b.dataset.visita, tipo: 'visita', titulo: '' })));
   el.querySelectorAll('[data-editar]').forEach(c => c.addEventListener('click', () => formTarefa(porId('tarefas', c.dataset.editar))));
   el.querySelectorAll('[data-abrir]').forEach(c => c.addEventListener('click', () => nav.ir('projeto/' + c.dataset.abrir)));
   el.querySelectorAll('[data-feito]').forEach(b => b.addEventListener('click', async e => {

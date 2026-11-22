@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js?v=202611221742';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221742';
-import { nav } from '../nav.js?v=202611221742';
-import { ESCRITORIO } from '../config.js?v=202611221742';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas, saudeProjeto } from '../negocio.js?v=202611221742';
-import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221742';
-import { novoProjeto } from './projetos.js?v=202611221742';
+import { store, porId } from '../dados.js?v=202611221748';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221748';
+import { nav } from '../nav.js?v=202611221748';
+import { ESCRITORIO } from '../config.js?v=202611221748';
+import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas, saudeProjeto } from '../negocio.js?v=202611221748';
+import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221748';
+import { novoProjeto } from './projetos.js?v=202611221748';
 
 function saudacao() {
   const hr = new Date().getHours();
@@ -24,7 +24,11 @@ function proximosPrazos() {
   store.complementares.filter(c => c.status !== 'entregue' && c.prazo && diasAte(c.prazo) <= LIMITE).forEach(c => {
     lista.push({ data: c.prazo, tit: `${c.disciplina} — ${nomeParceiro(c.parceiro_id)}`, sub: porId('projetos', c.projeto_id)?.nome || '', tipo: 'Parceiro', ir: `projeto/${c.projeto_id}/complementares` });
   });
-  store.tarefas.filter(t => t.status !== 'feito' && t.tipo !== 'projeto' && t.prazo && diasAte(t.prazo) <= LIMITE).forEach(t => {
+  store.tarefas.filter(t => (t.tipo === 'visita' || t.tipo === 'reuniao') && t.status !== 'feito' && t.dia && diasAte(t.dia) >= 0 && diasAte(t.dia) <= LIMITE).forEach(t => {
+    const pr = porId('projetos', t.projeto_id);
+    lista.push({ data: t.dia, tit: `${t.hora ? t.hora + ' · ' : ''}${t.titulo}`, sub: `${t.responsavel || ''}${pr ? ' · ' + pr.nome : ''}${t.local ? ' · ' + t.local : ''}`, tipo: t.tipo === 'visita' ? 'Visita' : 'Reunião', ir: 'programacao' });
+  });
+  store.tarefas.filter(t => t.status !== 'feito' && !['projeto', 'visita', 'reuniao'].includes(t.tipo) && t.prazo && diasAte(t.prazo) <= LIMITE).forEach(t => {
     lista.push({ data: t.prazo, tit: t.titulo, sub: `${t.responsavel || ''}${t.projeto_id ? ' · ' + (porId('projetos', t.projeto_id)?.nome || '') : ''}`, tipo: 'Tarefa', ir: 'tarefas' });
   });
   store.despesas.filter(x => !x.pago && x.vencimento && diasAte(x.vencimento) <= 7).forEach(x => {

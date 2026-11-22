@@ -483,6 +483,15 @@ tr.saude-vermelho td:first-child { box-shadow: inset 5px 0 0 var(--perigo); }
 .vezes-prog { font-size: .72rem; color: var(--texto-3); margin-top: 4px; }
 .aguard-prog { width: 100%; justify-content: flex-start; font-size: .8rem; color: var(--laranja) !important; margin-top: 4px; }
 .lista-aguard .cartao-prog { opacity: .6; }
+.cartao-prog.tipo-visita { border-left-color: var(--laranja); background: #fff8ef; }
+.cartao-prog.tipo-visita .hora-prog { color: #b0621a; }
+.local-prog { display: flex; gap: 3px; align-items: flex-start; }
+.fora-dia { font-size: .74rem; color: #b0621a; background: var(--laranja-claro); border-radius: 6px; padding: 3px 7px; margin: -4px 0 8px; display: flex; gap: 4px; align-items: center; }
+.add-duplo { display: flex; gap: 2px; }
+.add-duplo .btn { flex: 1; padding: 6px 4px; font-size: .8rem; justify-content: center; }
+.tipo-tag { font-size: .74rem; display: inline-flex; gap: 4px; align-items: center; border-radius: 6px; padding: 1px 6px; margin-bottom: 3px; }
+.tipo-tag.visita { background: var(--laranja-claro); color: #b0621a; }
+.tipo-tag.reuniao { background: var(--terracota-clara); color: var(--terracota); }
 .marca-pos { height: 3px; border-radius: 3px; background: var(--verde); margin: -2px 2px 6px; box-shadow: 0 0 0 2px rgba(85, 105, 70, .15); }
 .setas-prog { position: absolute; right: 3px; bottom: 3px; display: flex; flex-direction: column; opacity: 0; }
 .setas-prog .btn-icone { width: 20px; height: 18px; }
@@ -492,7 +501,8 @@ tr.saude-vermelho td:first-child { box-shadow: inset 5px 0 0 var(--perigo); }
 .tirar-prog { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; opacity: 0; }
 .cartao-prog:hover .tirar-prog { opacity: 1; }
 @media (hover: none) { .tirar-prog { opacity: .7; } }
-.cartao-prog .corpo-prog { padding-right: 20px; }
+.cartao-prog .corpo-prog { padding-right: 12px; }
+.hora-prog { white-space: nowrap; }
 .cartao-prog.tipo-projeto .corpo-prog { cursor: pointer; }
 
 /* ---------------------------------------------------------------- modal */

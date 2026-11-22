@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221742';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221742';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221742';
-import { hoje, somarDias } from './util.js?v=202611221742';
+import { store, inserir, atualizar } from './dados.js?v=202611221748';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221748';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221748';
+import { hoje, somarDias } from './util.js?v=202611221748';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -116,7 +116,7 @@ export async function criarDadosExemplo() {
     { tipo: 'reuniao', titulo: 'Reunião de apresentação do 3D', responsavel: 'Aline', projeto_id: p2.id, dia: d(2), hora: '10:00', prioridade: 'alta', status: 'afazer' },
     { tipo: 'projeto', titulo: 'Residência Costa · Anteprojeto', responsavel: 'Aline', projeto_id: p1.id, dia: d(1), prioridade: 'media', status: 'afazer' },
     { tipo: 'projeto', titulo: 'Clínica Viver Bem · Estudo preliminar', responsavel: 'Julia', projeto_id: p2.id, dia: d(1), prazo: d(3), prioridade: 'alta', status: 'fazendo' },
-    { tipo: 'reuniao', titulo: 'Visita à obra do galpão', responsavel: 'Aline', projeto_id: p3.id, dia: d(3), hora: '14:30', prioridade: 'media', status: 'afazer' },
+    { tipo: 'visita', titulo: 'Visita à obra do galpão', responsavel: 'Aline', projeto_id: p3.id, dia: d(3), hora: '14:30', hora_fim: '17:00', local: 'Rod. Fernão Dias, km 492', prioridade: 'media', status: 'afazer' },
   ].map((t, i) => ({ tipo: 'tarefa', ...t, ordem: i })));
 
   await inserir('orcamentos', [

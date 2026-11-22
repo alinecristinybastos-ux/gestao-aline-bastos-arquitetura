@@ -2,11 +2,11 @@
 //  TAREFAS DA EQUIPE — quadro (A fazer / Fazendo / Feito)
 //  Arraste os cartões entre as colunas.
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221742';
-import { h, icone, tentar, diasAte } from '../util.js?v=202611221742';
-import { nav } from '../nav.js?v=202611221742';
-import { EQUIPE } from '../config.js?v=202611221742';
-import { formTarefa, avatar, tagPrazo, rotuloProjeto } from '../componentes.js?v=202611221742';
+import { store, porId, atualizar } from '../dados.js?v=202611221748';
+import { h, icone, tentar, diasAte } from '../util.js?v=202611221748';
+import { nav } from '../nav.js?v=202611221748';
+import { EQUIPE } from '../config.js?v=202611221748';
+import { formTarefa, avatar, tagPrazo, rotuloProjeto } from '../componentes.js?v=202611221748';
 
 const COLUNAS = [['afazer', 'A fazer'], ['fazendo', 'Fazendo'], ['feito', 'Feito']];
 let pessoa = '';
@@ -17,6 +17,7 @@ function cartao(t) {
   return `<div class="cartao-tarefa ${t.status === 'feito' ? 'feita' : ''}" draggable="true" data-tarefa="${t.id}" style="display:flex;gap:10px">
     <span class="prio prio-${t.prioridade || 'media'}" title="Prioridade ${t.prioridade || 'média'}"></span>
     <div style="flex:1;min-width:0">
+      ${t.tipo === 'visita' ? `<div class="tipo-tag visita">${icone('local', 11)} Visita${t.dia ? ' · ' + t.dia.slice(8, 10) + '/' + t.dia.slice(5, 7) : ''}${t.hora ? ' ' + h(t.hora) : ''}</div>` : t.tipo === 'reuniao' ? `<div class="tipo-tag reuniao">${icone('clientes', 11)} Reunião${t.dia ? ' · ' + t.dia.slice(8, 10) + '/' + t.dia.slice(5, 7) : ''}${t.hora ? ' ' + h(t.hora) : ''}</div>` : ''}
       <h4>${h(t.titulo)}</h4>
       ${p ? `<div class="fraco" style="font-size:.8rem">${icone('projetos', 12)} ${h(rotuloProjeto(p))}</div>` : ''}
       <div class="meta">${avatar(t.responsavel)}${t.prazo ? tagPrazo(t.prazo, t.status === 'feito') : ''}${t.descricao ? `<span title="Tem detalhes">${icone('lista', 13)}</span>` : ''}</div>
