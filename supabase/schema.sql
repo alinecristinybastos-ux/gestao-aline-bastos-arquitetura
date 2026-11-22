@@ -177,6 +177,12 @@ create index if not exists idx_compl_projeto on complementares(projeto_id);
 create index if not exists idx_anexos_ref on anexos(ref_tipo, ref_id);
 
 -- ---------- SEGURANÇA: só usuárias logadas (Aline, Julia) acessam ----------
+-- permissões de acesso às tabelas (projetos novos do Supabase não liberam automaticamente)
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to authenticated;
+
 do $$
 declare t text;
 begin
