@@ -481,6 +481,8 @@ tr.saude-vermelho td:first-child { box-shadow: inset 5px 0 0 var(--perigo); }
 .cartao-prog { position: relative; }
 .fase-prog { color: var(--verde) !important; display: flex; gap: 3px; align-items: center; }
 .vezes-prog { font-size: .72rem; color: var(--texto-3); margin-top: 4px; }
+.aguard-prog { width: 100%; justify-content: flex-start; font-size: .8rem; color: var(--laranja) !important; margin-top: 4px; }
+.lista-aguard .cartao-prog { opacity: .6; }
 .busca-prog { padding: 6px 9px !important; font-size: .84rem !important; margin-bottom: 8px; }
 .tirar-prog { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; opacity: 0; }
 .cartao-prog:hover .tirar-prog { opacity: 1; }

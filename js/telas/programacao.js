@@ -5,18 +5,19 @@
 //  ir para vários dias. Reuniões podem ser marcadas em cada dia.
 //  Cada dia programado é um registro em "tarefas" com tipo 'projeto'.
 // =====================================================================
-import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221734';
-import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221734';
-import { nav } from '../nav.js?v=202611221734';
-import { EQUIPE } from '../config.js?v=202611221734';
-import { formTarefa } from '../componentes.js?v=202611221734';
-import { faseAtual, saudeProjeto, nomeCliente } from '../negocio.js?v=202611221734';
+import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611221736';
+import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611221736';
+import { nav } from '../nav.js?v=202611221736';
+import { EQUIPE } from '../config.js?v=202611221736';
+import { formTarefa } from '../componentes.js?v=202611221736';
+import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas } from '../negocio.js?v=202611221736';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 let pessoa = null;
 let semana = null; // segunda-feira da semana mostrada
 let busca = '';
+let mostrarAguardando = false;
 
 try { pessoa = localStorage.getItem('ab_prog_pessoa'); } catch { /* ignora */ }
 
@@ -83,9 +84,12 @@ export function render(el) {
     .sort((a, b) => (a.tipo === 'reuniao' ? 0 : 1) - (b.tipo === 'reuniao' ? 0 : 1) || String(a.hora || '').localeCompare(String(b.hora || '')));
   const daSemana = minhas.filter(t => t.dia >= semana && t.dia <= somarDias(semana, 5));
   const vezes = (pid) => daSemana.filter(t => t.tipo === 'projeto' && t.projeto_id === pid).length;
-  const ativos = store.projetos.filter(p => ['ativo', 'pausado'].includes(p.status))
+  const emAndamento = store.projetos.filter(p => ['ativo', 'pausado'].includes(p.status))
     .filter(p => !busca || `${p.nome} ${nomeCliente(p.cliente_id)}`.toLowerCase().includes(busca.toLowerCase()))
     .sort((a, b) => nomeCliente(a.cliente_id).localeCompare(nomeCliente(b.cliente_id), 'pt-BR'));
+  // projetos parados esperando o cliente não entram na lista para programar
+  const aguardando = emAndamento.filter(p => pendenciasAbertas(p.id).length);
+  const ativos = emAndamento.filter(p => !pendenciasAbertas(p.id).length);
   const nProj = daSemana.filter(t => t.tipo === 'projeto').length;
   const nReu = daSemana.filter(t => t.tipo === 'reuniao').length;
 
@@ -105,7 +109,9 @@ export function render(el) {
       <div class="coluna col-programar" data-dia="">
         <div class="coluna-cab"><strong>Projetos</strong><span class="n">${ativos.length}</span></div>
         <input class="entrada busca-prog" id="busca-prog" placeholder="Buscar…" value="${h(busca)}">
-        ${ativos.map(p => cartaoPaleta(p, vezes(p.id))).join('') || '<div class="vazio" style="padding:10px 4px;font-size:.82rem">Nenhum projeto em andamento</div>'}
+        ${ativos.map(p => cartaoPaleta(p, vezes(p.id))).join('') || '<div class="vazio" style="padding:10px 4px;font-size:.82rem">Nenhum projeto para programar</div>'}
+        ${aguardando.length ? `<button class="btn btn-leve aguard-prog" data-aguard>${icone('alerta', 13)} ${aguardando.length} aguardando cliente ${mostrarAguardando ? '· ocultar' : '· mostrar'}</button>
+          ${mostrarAguardando ? `<div class="lista-aguard">${aguardando.map(p => cartaoPaleta(p, vezes(p.id))).join('')}</div>` : ''}` : ''}
       </div>
       ${dias.map(d => {
         const itens = doDia(d.iso);
@@ -126,6 +132,7 @@ export function render(el) {
   el.querySelectorAll('[data-sem]').forEach(b => b.addEventListener('click', () => {
     semana = b.dataset.sem === 'hoje' ? semanaAtual() : somarDias(semana, Number(b.dataset.sem)); render(el);
   }));
+  el.querySelector('[data-aguard]')?.addEventListener('click', () => { mostrarAguardando = !mostrarAguardando; render(el); });
   const bx = el.querySelector('#busca-prog');
   bx.addEventListener('input', () => { busca = bx.value; render(el); const n = el.querySelector('#busca-prog'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); });
 
