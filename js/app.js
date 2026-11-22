@@ -1,21 +1,22 @@
 // =====================================================================
 //  Aplicativo: login, menu lateral e rotas
 // =====================================================================
-import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611221702';
-import { icone, h, aviso, diasAte } from './util.js?v=202611221702';
-import { nav } from './nav.js?v=202611221702';
-import { situacaoRecebimento } from './negocio.js?v=202611221702';
-import { abrirBackup, diasSemBackup } from './backup.js?v=202611221702';
-import { criarDadosExemplo } from './exemplo.js?v=202611221702';
+import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611221706';
+import { icone, h, aviso, diasAte } from './util.js?v=202611221706';
+import { nav } from './nav.js?v=202611221706';
+import { situacaoRecebimento } from './negocio.js?v=202611221706';
+import { VERSAO, DATA_VERSAO } from './versao.js?v=202611221706';
+import { abrirBackup, diasSemBackup } from './backup.js?v=202611221706';
+import { criarDadosExemplo } from './exemplo.js?v=202611221706';
 
-import * as painel from './telas/painel.js?v=202611221702';
-import * as projetos from './telas/projetos.js?v=202611221702';
-import * as projeto from './telas/projeto.js?v=202611221702';
-import * as clientes from './telas/clientes.js?v=202611221702';
-import * as financeiro from './telas/financeiro.js?v=202611221702';
-import * as orcamentos from './telas/orcamentos.js?v=202611221702';
-import * as tarefas from './telas/tarefas.js?v=202611221702';
-import * as parceiros from './telas/parceiros.js?v=202611221702';
+import * as painel from './telas/painel.js?v=202611221706';
+import * as projetos from './telas/projetos.js?v=202611221706';
+import * as projeto from './telas/projeto.js?v=202611221706';
+import * as clientes from './telas/clientes.js?v=202611221706';
+import * as financeiro from './telas/financeiro.js?v=202611221706';
+import * as orcamentos from './telas/orcamentos.js?v=202611221706';
+import * as tarefas from './telas/tarefas.js?v=202611221706';
+import * as parceiros from './telas/parceiros.js?v=202611221706';
 
 const MENU = [
   ['painel', 'Painel', 'painel'],
@@ -46,6 +47,7 @@ function montarCasca(usuario) {
         <button id="btn-backup">${icone('arquivo', 16)} Baixar backup</button>
         <div>${h(usuario?.email || '')}</div>
         ${!modoDemo ? `<button id="btn-sair">${icone('sair', 16)} Sair</button>` : ''}
+        <div class="versao-app" title="Versão do aplicativo">v.${VERSAO} · ${DATA_VERSAO}</div>
       </div>
     </aside>
     <div class="principal">

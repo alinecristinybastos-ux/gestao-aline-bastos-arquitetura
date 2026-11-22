@@ -82,6 +82,6 @@ js/exemplo.js         dados do modo demonstração
 supabase/schema.sql   estrutura do banco
 ```
 
-**Depois de alterar qualquer arquivo**, rode `sh versao.sh` antes de enviar ao GitHub. Ele marca uma versão nova para o navegador não usar cópias antigas.
+**Depois de alterar qualquer arquivo**, rode `sh versao.sh nova` antes de enviar ao GitHub: sobe o número da versão mostrado no menu (v.30, v.31…) e renova a marca para o navegador não usar cópias antigas.
 
 Para testar no computador, rode `python3 -m http.server` na pasta e abra `http://localhost:8000`.

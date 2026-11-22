@@ -86,6 +86,7 @@ a { color: var(--verde); text-decoration: none; }
 .lateral .rodape-lateral { border-top: 1px solid rgba(255, 255, 255, .12); padding-top: 12px; font-size: .82rem; color: #b8c0b0; }
 .lateral .rodape-lateral button { background: none; border: 0; color: #d6dccf; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 6px 2px; }
 .lateral .rodape-lateral button:hover { color: #fff; }
+.versao-app { font-size: .72rem; color: #8f9a85; margin-top: 6px; letter-spacing: .03em; }
 .selo-demo { background: var(--terracota); color: #fff; border-radius: 6px; padding: 6px 9px; font-size: .78rem; margin-bottom: 8px; line-height: 1.35; }
 
 .principal { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; isolation: isolate; }
