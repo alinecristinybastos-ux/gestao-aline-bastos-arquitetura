@@ -1,19 +1,22 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221522';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221522';
-import { EQUIPE } from './config.js?v=202611221522';
-import { abrirRecibo } from './recibo.js?v=202611221522';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221522';
-import { nav } from './nav.js?v=202611221522';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221522';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221525';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221525';
+import { EQUIPE } from './config.js?v=202611221525';
+import { abrirRecibo } from './recibo.js?v=202611221525';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221525';
+import { nav } from './nav.js?v=202611221525';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221525';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
+/** "Cliente — Projeto", em ordem alfabética do cliente. */
+export const rotuloProjeto = (p) => `${porId('clientes', p.cliente_id)?.nome || 'Sem cliente'} — ${p.nome}`;
 export const opcoesProjetos = (soAtivos = true) => store.projetos
   .filter(p => !soAtivos || p.status === 'ativo' || p.status === 'pausado')
-  .sort((a, b) => a.nome.localeCompare(b.nome)).map(p => [p.id, p.nome]);
+  .map(p => [p.id, rotuloProjeto(p)])
+  .sort((a, b) => a[1].localeCompare(b[1], 'pt-BR', { sensitivity: 'base' }));
 export const opcoesParceiros = () => [...store.parceiros].sort((a, b) => a.nome.localeCompare(b.nome))
   .map(p => [p.id, `${p.nome}${p.especialidade ? ' — ' + p.especialidade : ''}`]);
 

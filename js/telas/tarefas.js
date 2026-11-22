@@ -2,11 +2,11 @@
 //  TAREFAS DA EQUIPE — quadro (A fazer / Fazendo / Feito)
 //  Arraste os cartões entre as colunas.
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221522';
-import { h, icone, tentar, diasAte } from '../util.js?v=202611221522';
-import { nav } from '../nav.js?v=202611221522';
-import { EQUIPE } from '../config.js?v=202611221522';
-import { formTarefa, avatar, tagPrazo } from '../componentes.js?v=202611221522';
+import { store, porId, atualizar } from '../dados.js?v=202611221525';
+import { h, icone, tentar, diasAte } from '../util.js?v=202611221525';
+import { nav } from '../nav.js?v=202611221525';
+import { EQUIPE } from '../config.js?v=202611221525';
+import { formTarefa, avatar, tagPrazo, rotuloProjeto } from '../componentes.js?v=202611221525';
 
 const COLUNAS = [['afazer', 'A fazer'], ['fazendo', 'Fazendo'], ['feito', 'Feito']];
 let pessoa = '';
@@ -18,7 +18,7 @@ function cartao(t) {
     <span class="prio prio-${t.prioridade || 'media'}" title="Prioridade ${t.prioridade || 'média'}"></span>
     <div style="flex:1;min-width:0">
       <h4>${h(t.titulo)}</h4>
-      ${p ? `<div class="fraco" style="font-size:.8rem">${icone('projetos', 12)} ${h(p.nome)}</div>` : ''}
+      ${p ? `<div class="fraco" style="font-size:.8rem">${icone('projetos', 12)} ${h(rotuloProjeto(p))}</div>` : ''}
       <div class="meta">${avatar(t.responsavel)}${t.prazo ? tagPrazo(t.prazo, t.status === 'feito') : ''}${t.descricao ? `<span title="Tem detalhes">${icone('lista', 13)}</span>` : ''}</div>
     </div></div>`;
 }
@@ -34,7 +34,7 @@ export function render(el) {
       <div class="acoes"><button class="btn btn-primario" id="nova-tar">${icone('mais', 16)} Nova tarefa</button></div></div>
     <div class="filtros">
       <div class="grupo-botoes">${[['', 'Todas'], ...EQUIPE.map(n => [n, n])].map(([k, v]) => `<button data-pessoa="${h(k)}" class="${pessoa === k ? 'ativo' : ''}">${v}</button>`).join('')}</div>
-      <select id="f-proj"><option value="">Todos os projetos</option>${projetosComTarefa.map(p => `<option value="${p.id}" ${projetoFiltro === p.id ? 'selected' : ''}>${h(p.nome)}</option>`).join('')}</select>
+      <select id="f-proj"><option value="">Todos os projetos</option>${projetosComTarefa.map(p => [p, rotuloProjeto(p)]).sort((a, b) => a[1].localeCompare(b[1], 'pt-BR')).map(([p, r]) => `<option value="${p.id}" ${projetoFiltro === p.id ? 'selected' : ''}>${h(r)}</option>`).join('')}</select>
     </div>
     <div class="quadro" style="grid-auto-columns:minmax(260px,1fr)">${COLUNAS.map(([st, nome]) => {
       const cards = lista.filter(t => t.status === st)

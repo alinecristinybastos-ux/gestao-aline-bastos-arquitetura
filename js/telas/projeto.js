@@ -2,21 +2,21 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221522';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221522';
-import { nav } from '../nav.js?v=202611221522';
-import { EQUIPE } from '../config.js?v=202611221522';
-import { CATEGORIAS, infoServico } from '../modelos.js?v=202611221522';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221525';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221525';
+import { nav } from '../nav.js?v=202611221525';
+import { EQUIPE } from '../config.js?v=202611221525';
+import { CATEGORIAS, infoServico } from '../modelos.js?v=202611221525';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento, esperaComplementares, nomeParceiro, complAtrasado, STATUS_COMPL, pendenciasAbertas,
-} from '../negocio.js?v=202611221522';
+} from '../negocio.js?v=202611221525';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
   ligarLinhasComplementares, formComplementaresContratados, formServicosContratados, formServico, formRegistroServico, STATUS_SERV, formPendencia, linhaPendencia, ligarPendencias, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221522';
-import { botaoRecibo, ligarRecibos } from '../recibo.js?v=202611221522';
-import { STATUS_PROJ } from './projetos.js?v=202611221522';
+} from '../componentes.js?v=202611221525';
+import { botaoRecibo, ligarRecibos } from '../recibo.js?v=202611221525';
+import { STATUS_PROJ } from './projetos.js?v=202611221525';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
