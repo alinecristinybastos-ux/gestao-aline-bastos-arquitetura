@@ -251,6 +251,7 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
 .proj-cab .cod { font-size: .8rem; color: var(--texto-3); letter-spacing: .05em; }
 .proj-cab h1 { font-weight: 400; font-size: 1.6rem; color: var(--verde-escuro); line-height: 1.2; margin: 2px 0 6px; }
 .proj-cab .linha-info { display: flex; gap: 8px 18px; flex-wrap: wrap; color: var(--texto-2); font-size: .9rem; }
+.obs-proj { margin-top: 10px; font-size: .88rem; color: var(--texto-2); background: #f6f4ee; border-radius: 8px; padding: 8px 10px; white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .proj-cab .linha-info span { display: inline-flex; gap: 6px; align-items: center; }
 .anel { --p: 0; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center;
   background: conic-gradient(var(--verde) calc(var(--p) * 1%), #ebe8df 0); }

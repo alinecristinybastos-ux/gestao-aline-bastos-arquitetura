@@ -5,9 +5,9 @@
 //  Os dados pessoais (nome, CAU, CPF, PIX) ficam no banco (tabela
 //  config), e não no código, porque o site é público.
 // =====================================================================
-import { store, porId, inserir, atualizar } from './dados.js?v=202611221525';
-import { h, moeda, hoje, formModal, aviso, icone } from './util.js?v=202611221525';
-import { CATEGORIAS } from './modelos.js?v=202611221525';
+import { store, porId, inserir, atualizar } from './dados.js?v=202611221529';
+import { h, moeda, hoje, formModal, aviso, icone } from './util.js?v=202611221529';
+import { CATEGORIAS } from './modelos.js?v=202611221529';
 
 // ---------------------------------------------------------------- dados do escritório
 export const configEscritorio = () => store.config.find(c => c.id === 'escritorio')?.dados || null;

@@ -2,21 +2,21 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221525';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221525';
-import { nav } from '../nav.js?v=202611221525';
-import { EQUIPE } from '../config.js?v=202611221525';
-import { CATEGORIAS, infoServico } from '../modelos.js?v=202611221525';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221529';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221529';
+import { nav } from '../nav.js?v=202611221529';
+import { EQUIPE } from '../config.js?v=202611221529';
+import { CATEGORIAS, TIPOS, intervencoesDa, infoServico } from '../modelos.js?v=202611221529';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento, esperaComplementares, nomeParceiro, complAtrasado, STATUS_COMPL, pendenciasAbertas,
-} from '../negocio.js?v=202611221525';
+} from '../negocio.js?v=202611221529';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
   ligarLinhasComplementares, formComplementaresContratados, formServicosContratados, formServico, formRegistroServico, STATUS_SERV, formPendencia, linhaPendencia, ligarPendencias, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221525';
-import { botaoRecibo, ligarRecibos } from '../recibo.js?v=202611221525';
-import { STATUS_PROJ } from './projetos.js?v=202611221525';
+} from '../componentes.js?v=202611221529';
+import { botaoRecibo, ligarRecibos } from '../recibo.js?v=202611221529';
+import { STATUS_PROJ } from './projetos.js?v=202611221529';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -54,9 +54,11 @@ export function render(el, [id, aba]) {
           ${p.contrato_assinado ? `<span class="tag tag-ok" title="Clique para desmarcar" id="tg-contrato" style="cursor:pointer">${icone('check', 12)} Contrato assinado</span>`
             : `<button class="tag tag-alerta" id="tg-contrato" style="cursor:pointer;border:0" title="Marcar que o contrato assinado foi recebido">Contrato assinado pendente · marcar recebido</button>`}
         </div>
+        ${p.observacoes ? `<div class="obs-proj" title="Observações do projeto">${h(p.observacoes)}</div>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
         <div class="anel" style="--p:${pr.pct}"><div><div><b>${pr.pct}%</b><br><small>${pr.etapasFeitas}/${pr.etapas} etapas</small></div></div></div>
+        <button class="btn btn-peq" id="ed-proj-topo">${icone('editar', 14)} Editar projeto</button>
         <button class="btn btn-peq btn-terracota" id="nova-pend" title="Registrar que o projeto está esperando uma decisão ou ação do cliente">${icone('alerta', 14)} Aguardando cliente</button>
       </div>
     </div>
@@ -89,11 +91,44 @@ export function render(el, [id, aba]) {
     await tentar(() => atualizar('projetos', id, { contrato_assinado: novo }), novo ? 'Contrato assinado registrado' : 'Contrato marcado como pendente');
     nav.recarregar();
   });
+  el.querySelector('#ed-proj-topo').addEventListener('click', () => formEditarProjeto(p));
   el.querySelector('#nova-pend').addEventListener('click', () => formPendencia(null, { projeto_id: id, etapa_id: estado.etapa }));
   ligarPendencias(el);
   el.querySelector('#status-proj').addEventListener('change', async e => {
     await tentar(() => atualizar('projetos', id, { status: e.target.value }), 'Situação atualizada'); nav.recarregar();
   });
+}
+
+// =====================================================================
+//  EDITAR PROJETO (botão no topo e na aba Dados)
+// =====================================================================
+function formEditarProjeto(p) {
+  const tipos = Object.entries(TIPOS[p.categoria] || {});
+  const comInterv = p.categoria !== 'complementares';
+  const m = formModal({
+    titulo: 'Editar projeto', valores: p, largura: 680,
+    campos: [
+      { nome: 'nome', rotulo: 'Nome do projeto', obrigatorio: true },
+      { nome: 'cliente_id', rotulo: 'Cliente', tipo: 'select', opcoes: opcoesClientes(), largura: 'meia' },
+      { nome: 'status', rotulo: 'Situação', tipo: 'select', vazio: false, opcoes: Object.entries(STATUS_PROJ), largura: 'meia' },
+      ...(p.categoria !== 'complementares' ? [{ nome: 'tipo', rotulo: `Tipo (${CATEGORIAS[p.categoria]})`, tipo: 'select', vazio: false, opcoes: tipos, largura: 'meia' }] : []),
+      ...(comInterv ? [{ nome: 'intervencao', rotulo: 'Intervenção', tipo: 'select', vazio: '—', opcoes: Object.entries(intervencoesDa(p.categoria)), largura: 'meia',
+        ajuda: 'Mudar o tipo ou a intervenção não refaz as etapas; acrescente ou exclua etapas se precisar.' }] : []),
+      { nome: 'endereco_obra', rotulo: 'Endereço da obra', largura: 'meia' },
+      { nome: 'area_m2', rotulo: 'Área (m²)', tipo: 'number', largura: 'meia' },
+      { nome: 'valor_contrato', rotulo: 'Valor do contrato', tipo: 'moeda', largura: 'meia' },
+      { nome: 'data_assinatura', rotulo: 'Data do contrato', tipo: 'date', largura: 'meia' },
+      { nome: 'contrato_assinado', rotulo: 'Já recebi o contrato assinado', tipo: 'checkbox' },
+      { nome: 'data_inicio', rotulo: 'Início', tipo: 'date', largura: 'meia' },
+      { nome: 'data_prevista', rotulo: 'Entrega prevista', tipo: 'date', largura: 'meia' },
+      { nome: 'observacoes', rotulo: 'Observações e informações do projeto', tipo: 'textarea', linhas: 5 },
+    ],
+    extraRodape: `<button type="button" class="btn btn-leve" data-ed-compl>Complementares</button>
+      <button type="button" class="btn btn-leve" data-ed-serv>Serviços</button>`,
+    onSalvar: async d => { await atualizar('projetos', p.id, d); aviso('Projeto atualizado'); nav.recarregar(); },
+  });
+  m.el.querySelector('[data-ed-compl]').addEventListener('click', () => formComplementaresContratados(p.id));
+  m.el.querySelector('[data-ed-serv]').addEventListener('click', () => formServicosContratados(p.id));
 }
 
 // =====================================================================
@@ -502,23 +537,7 @@ function abaDados(area, p) {
     <div class="tabela-envolve"><table class="tabela"><thead><tr><th>Nome</th><th>Parentesco</th><th>Idade</th><th>Profissão</th><th>Observações</th></tr></thead><tbody>
     ${familiaDe(porId('clientes', p.cliente_id)).map(f => `<tr><td>${h(f.nome)}</td><td>${h(f.parentesco || '')}</td><td>${idadeAtual(f) ?? ''}</td><td>${h(f.profissao || '')}</td><td class="fraco">${h(f.obs || '')}</td></tr>`).join('')}
     </tbody></table></div></div>` : ''}`;
-  area.querySelector('#ed-proj').addEventListener('click', () => formModal({
-    titulo: 'Editar projeto', valores: p,
-    campos: [
-      { nome: 'nome', rotulo: 'Nome do projeto', obrigatorio: true },
-      { nome: 'cliente_id', rotulo: 'Cliente', tipo: 'select', opcoes: opcoesClientes(), largura: 'meia' },
-      { nome: 'status', rotulo: 'Situação', tipo: 'select', vazio: false, opcoes: Object.entries(STATUS_PROJ), largura: 'meia' },
-      { nome: 'endereco_obra', rotulo: 'Endereço da obra', largura: 'meia' },
-      { nome: 'area_m2', rotulo: 'Área (m²)', tipo: 'number', largura: 'meia' },
-      { nome: 'valor_contrato', rotulo: 'Valor do contrato', tipo: 'moeda', largura: 'meia' },
-      { nome: 'data_assinatura', rotulo: 'Data do contrato', tipo: 'date', largura: 'meia' },
-      { nome: 'contrato_assinado', rotulo: 'Já recebi o contrato assinado', tipo: 'checkbox' },
-      { nome: 'data_inicio', rotulo: 'Início', tipo: 'date', largura: 'meia' },
-      { nome: 'data_prevista', rotulo: 'Entrega prevista', tipo: 'date', largura: 'meia' },
-      { nome: 'observacoes', rotulo: 'Observações', tipo: 'textarea' },
-    ],
-    onSalvar: async d => { await atualizar('projetos', p.id, d); aviso('Projeto atualizado'); nav.recarregar(); },
-  }));
+  area.querySelector('#ed-proj').addEventListener('click', () => formEditarProjeto(p));
   area.querySelector('#rm-proj').addEventListener('click', async () => {
     if (!await confirmar(`Excluir o projeto "${p.nome}" com todas as etapas, checklist e pagamentos? Esta ação não pode ser desfeita.`, { ok: 'Excluir projeto', perigo: true })) return;
     await tentar(() => remover('projetos', p.id), 'Projeto excluído');
