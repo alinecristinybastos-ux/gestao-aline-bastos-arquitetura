@@ -199,6 +199,23 @@ create table if not exists servicos (
 );
 create index if not exists idx_serv_projeto on servicos(projeto_id);
 
+-- ---------- DESPESAS DO ESCRITÓRIO (salários, softwares, impostos...) ----------
+create table if not exists despesas (
+  id uuid primary key default gen_random_uuid(),
+  descricao text not null,
+  categoria text,
+  valor numeric not null default 0,
+  vencimento date not null,
+  pago boolean default false,
+  pago_em date,
+  forma text,
+  grupo uuid,                 -- despesas mensais da mesma série
+  projeto_id uuid references projetos(id) on delete set null,
+  obs text,
+  criado_em timestamptz default now()
+);
+create index if not exists idx_desp_venc on despesas(vencimento);
+
 -- ---------- TAREFAS DA EQUIPE ----------
 create table if not exists tarefas (
   id uuid primary key default gen_random_uuid(),
@@ -241,7 +258,7 @@ alter default privileges in schema public
 do $$
 declare t text;
 begin
-  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','pendencias','servicos','tarefas','anexos']
+  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','pendencias','servicos','despesas','tarefas','anexos']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "equipe_total" on %I', t);

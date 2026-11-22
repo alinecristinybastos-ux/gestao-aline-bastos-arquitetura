@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221413';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221413';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221413';
-import { hoje, somarDias } from './util.js?v=202611221413';
+import { store, inserir, atualizar } from './dados.js?v=202611221428';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221428';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221428';
+import { hoje, somarDias } from './util.js?v=202611221428';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -80,6 +80,18 @@ export async function criarDadosExemplo() {
     { parceiro_id: carlos.id, data: d(-3), valor: 2000, forma: 'PIX', obs: 'Adiantamento Residência Costa' },
     { parceiro_id: marcos.id, data: d(-30), valor: 3000, forma: 'Transferência' },
   ]);
+
+  const g1 = crypto.randomUUID(), g2 = crypto.randomUUID(), g3 = crypto.randomUUID();
+  const mesAnt = (n, dia) => { const t = new Date(); const x = new Date(t.getFullYear(), t.getMonth() + n, dia); return x.toISOString().slice(0, 10); };
+  const desp = [];
+  for (let i = -2; i <= 9; i++) {
+    desp.push({ descricao: 'Salário Julia', categoria: 'Equipe (salários e encargos)', valor: 3500, vencimento: mesAnt(i, 5), grupo: g1, pago: i <= 0, pago_em: i <= 0 ? mesAnt(i, 5) : null, forma: 'PIX' });
+    desp.push({ descricao: 'Claude Pro e ChatGPT', categoria: 'Software, IA e assinaturas', valor: 220, vencimento: mesAnt(i, 12), grupo: g2, pago: i <= 0, pago_em: i <= 0 ? mesAnt(i, 12) : null, forma: 'Cartão de crédito' });
+    desp.push({ descricao: 'Contador', categoria: 'Contador', valor: 450, vencimento: mesAnt(i, 20), grupo: g3, pago: i < 0, pago_em: i < 0 ? mesAnt(i, 20) : null, forma: 'Boleto' });
+  }
+  desp.push({ descricao: 'DAS Simples Nacional', categoria: 'Impostos e taxas', valor: 980, vencimento: mesAnt(0, 20), pago: false, forma: 'Boleto' });
+  desp.push({ descricao: 'Anuidade CAU', categoria: 'CAU / anuidades', valor: 690, vencimento: mesAnt(-1, 28), pago: true, pago_em: mesAnt(-1, 28) });
+  await inserir('despesas', desp);
 
   await inserir('servicos', [
     { projeto_id: p1.id, servico: 'Processo de alvará na prefeitura', status: 'a_fazer', prazo: d(40), registros: [] },

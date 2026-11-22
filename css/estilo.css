@@ -420,6 +420,15 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
 .registros li:hover { color: var(--texto); }
 .registros b { font-weight: 400; color: var(--verde); margin-right: 6px; }
 
+.linha-sit { margin-top: 4px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.linha-sit .tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.nav-mes { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+.nav-mes h2 { font-weight: 400; font-size: 1.35rem; color: var(--verde-escuro); min-width: 190px; text-align: center; text-transform: capitalize; }
+.barra-cat { display: grid; grid-template-columns: 240px 1fr 110px 44px; gap: 12px; align-items: center; padding: 5px 0; font-size: .9rem; }
+.barra-cat b { font-weight: 400; text-align: right; font-variant-numeric: tabular-nums; }
+.barra-cat small { color: var(--texto-3); text-align: right; }
+@media (max-width: 860px) { .barra-cat { grid-template-columns: 1fr 90px; } .barra-cat .progresso { grid-column: 1 / -1; order: 3; } .barra-cat small { display: none; } }
+
 /* ---------------------------------------------------------------- modal */
 .modal-fundo { position: fixed; inset: 0; background: rgba(23, 31, 16, .45); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; z-index: 50; overflow-y: auto; animation: aparecer .15s ease-out; }
 .modal { background: var(--papel); border-radius: 14px; width: 100%; box-shadow: var(--sombra-forte); display: flex; flex-direction: column; max-height: 90vh; animation: subir .18s ease-out; }
@@ -496,7 +505,7 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
   .proj-cab .anel { display: none; }
   .form-grade .campo.meia, .form-grade .campo.terco { grid-column: span 6; }
   .opcoes-tipo { grid-template-columns: 1fr; }
-  .resumo-fin { grid-template-columns: 1fr; }
+  .resumo-fin { grid-template-columns: 1fr !important; }
   .busca input { min-width: 0; width: 100%; }
   .item .acoes-item { opacity: 1; }
   .resp-linha, .fam-linha { grid-template-columns: 1fr 32px; padding-bottom: 8px; border-bottom: 1px dashed var(--linha-forte); }

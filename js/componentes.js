@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221413';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221413';
-import { EQUIPE } from './config.js?v=202611221413';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221413';
-import { nav } from './nav.js?v=202611221413';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221413';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221428';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221428';
+import { EQUIPE } from './config.js?v=202611221428';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221428';
+import { nav } from './nav.js?v=202611221428';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221428';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -390,6 +390,72 @@ export function ligarPendencias(raiz) {
     tentar(() => atualizar('pendencias', x.id, { cobrancas: (x.cobrancas || 0) + 1, ultima_cobranca: hoje(), prazo: somarDias(hoje(), 3) }))
       .then(() => { aviso('Cobrança registrada. Próximo lembrete em 3 dias.'); nav.recarregar(); });
   }));
+}
+
+// ---------------------------------------------------------------- despesas do escritório
+export const CATEGORIAS_DESPESA = [
+  'Equipe (salários e encargos)', 'Pró-labore', 'Software, IA e assinaturas', 'Impostos e taxas',
+  'Contador', 'Aluguel e condomínio', 'Água, luz, internet e telefone', 'Marketing e redes sociais',
+  'Transporte e combustível', 'Material de escritório e impressão', 'Cursos e eventos',
+  'Equipamentos', 'Tarifas bancárias', 'CAU / anuidades', 'Outros',
+];
+
+function mesmaSerieDepois(d) {
+  return d.grupo ? store.despesas.filter(x => x.grupo === d.grupo && x.vencimento > d.vencimento) : [];
+}
+
+export function formDespesa(desp = null, padrao = {}) {
+  const campos = [
+    { nome: 'descricao', rotulo: 'Descrição', obrigatorio: true, placeholder: 'Ex.: Salário Julia, Claude Pro, DAS Simples…' },
+    { nome: 'categoria', rotulo: 'Categoria', tipo: 'select', opcoes: CATEGORIAS_DESPESA.map(c => [c, c]), largura: 'meia' },
+    { nome: 'valor', rotulo: 'Valor', tipo: 'moeda', obrigatorio: true, largura: 'meia' },
+    { nome: 'vencimento', rotulo: 'Vencimento', tipo: 'date', obrigatorio: true, largura: 'meia' },
+    { nome: 'forma', rotulo: 'Forma de pagamento', tipo: 'select', opcoes: ['PIX', 'Cartão de crédito', 'Boleto', 'Débito automático', 'Transferência', 'Dinheiro'].map(o => [o, o]), largura: 'meia' },
+    ...(!desp ? [{ nome: 'repetir', rotulo: 'Despesa fixa: repetir todo mês (cria os próximos 12 meses)', tipo: 'checkbox' }] : []),
+    ...(desp?.grupo ? [{ nome: 'serie', rotulo: `Aplicar descrição, categoria e valor também aos próximos meses (${mesmaSerieDepois(desp).length})`, tipo: 'checkbox' }] : []),
+    { nome: 'pago', rotulo: 'Já está pago', tipo: 'checkbox' },
+    { nome: 'pago_em', rotulo: 'Pago em', tipo: 'date', largura: 'meia' },
+    { nome: 'projeto_id', rotulo: 'Ligada a um projeto (opcional)', tipo: 'select', opcoes: opcoesProjetos(false), vazio: 'Despesa geral do escritório', largura: 'meia' },
+    { nome: 'obs', rotulo: 'Observações', tipo: 'textarea', linhas: 2 },
+  ];
+  const m = formModal({
+    titulo: desp ? 'Editar despesa' : 'Nova despesa', campos,
+    valores: desp || { vencimento: padrao.vencimento || hoje(), categoria: padrao.categoria },
+    extraRodape: desp ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>
+      ${desp.grupo && mesmaSerieDepois(desp).length ? `<button class="btn btn-leve" type="button" data-excluir-serie>Excluir este e os próximos</button>` : ''}` : '',
+    onSalvar: async d => {
+      const { repetir, serie } = d; delete d.repetir; delete d.serie;
+      if (d.pago && !d.pago_em) d.pago_em = hoje();
+      if (!d.pago) d.pago_em = null;
+      if (desp) {
+        await atualizar('despesas', desp.id, d);
+        if (serie) for (const x of mesmaSerieDepois(desp)) await atualizar('despesas', x.id, { descricao: d.descricao, categoria: d.categoria, valor: d.valor });
+      } else if (repetir) {
+        const grupo = uid();
+        const [a, mm, dd] = d.vencimento.split('-').map(Number);
+        const linhas = Array.from({ length: 12 }, (_, i) => {
+          const dt = new Date(a, mm - 1 + i, 1);
+          const fim = new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate();
+          const venc = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(Math.min(dd, fim)).padStart(2, '0')}`;
+          return { ...d, vencimento: venc, grupo, pago: i === 0 ? d.pago : false, pago_em: i === 0 ? d.pago_em : null };
+        });
+        await inserir('despesas', linhas);
+      } else await inserir('despesas', d);
+      aviso(repetir ? 'Despesa fixa lançada para os próximos 12 meses' : 'Despesa salva'); nav.recarregar();
+    },
+  });
+  const f = m.el.querySelector('form');
+  const alternar = () => f.pago_em.closest('.campo').classList.toggle('oculto', !f.pago.checked);
+  f.pago.addEventListener('change', alternar); alternar();
+  m.el.querySelector('[data-excluir]')?.addEventListener('click', async () => {
+    if (!await confirmar(`Excluir a despesa "${desp.descricao}" de ${data(desp.vencimento)}?`, { ok: 'Excluir', perigo: true })) return;
+    await tentar(() => remover('despesas', desp.id), 'Despesa excluída'); m.fechar(); nav.recarregar();
+  });
+  m.el.querySelector('[data-excluir-serie]')?.addEventListener('click', async () => {
+    const lista = [desp, ...mesmaSerieDepois(desp)];
+    if (!await confirmar(`Excluir "${desp.descricao}" deste mês e dos próximos (${lista.length} lançamentos)? Os meses anteriores ficam.`, { ok: 'Excluir', perigo: true })) return;
+    await tentar(async () => { for (const x of lista) await remover('despesas', x.id); }, 'Despesas excluídas'); m.fechar(); nav.recarregar();
+  });
 }
 
 // ---------------------------------------------------------------- serviços adicionais

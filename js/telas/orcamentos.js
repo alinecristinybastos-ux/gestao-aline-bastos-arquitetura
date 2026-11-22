@@ -1,13 +1,13 @@
 // =====================================================================
 //  ORÇAMENTOS / PROPOSTAS — controle e impressão com a identidade visual
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221413';
-import { h, icone, moeda, data, hoje, somarDias, formModal, confirmar, aviso, tentar } from '../util.js?v=202611221413';
-import { nav } from '../nav.js?v=202611221413';
-import { ESCRITORIO } from '../config.js?v=202611221413';
-import { CATEGORIAS, TIPOS, INTERVENCOES } from '../modelos.js?v=202611221413';
-import { opcoesClientes } from '../componentes.js?v=202611221413';
-import { novoProjeto } from './projetos.js?v=202611221413';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221428';
+import { h, icone, moeda, data, hoje, somarDias, formModal, confirmar, aviso, tentar } from '../util.js?v=202611221428';
+import { nav } from '../nav.js?v=202611221428';
+import { ESCRITORIO } from '../config.js?v=202611221428';
+import { CATEGORIAS, TIPOS, INTERVENCOES } from '../modelos.js?v=202611221428';
+import { opcoesClientes } from '../componentes.js?v=202611221428';
+import { novoProjeto } from './projetos.js?v=202611221428';
 
 const STATUS = { rascunho: 'Rascunho', enviado: 'Enviado', aprovado: 'Aprovado', recusado: 'Recusado' };
 const COR = { rascunho: 'neutro', enviado: 'areia', aprovado: 'ok', recusado: 'perigo' };

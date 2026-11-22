@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js?v=202611221413';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221413';
-import { nav } from '../nav.js?v=202611221413';
-import { ESCRITORIO } from '../config.js?v=202611221413';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221413';
-import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221413';
-import { novoProjeto } from './projetos.js?v=202611221413';
+import { store, porId } from '../dados.js?v=202611221428';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221428';
+import { nav } from '../nav.js?v=202611221428';
+import { ESCRITORIO } from '../config.js?v=202611221428';
+import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221428';
+import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221428';
+import { novoProjeto } from './projetos.js?v=202611221428';
 
 function saudacao() {
   const hr = new Date().getHours();
@@ -26,6 +26,9 @@ function proximosPrazos() {
   });
   store.tarefas.filter(t => t.status !== 'feito' && t.prazo && diasAte(t.prazo) <= LIMITE).forEach(t => {
     lista.push({ data: t.prazo, tit: t.titulo, sub: `${t.responsavel || ''}${t.projeto_id ? ' · ' + (porId('projetos', t.projeto_id)?.nome || '') : ''}`, tipo: 'Tarefa', ir: 'tarefas' });
+  });
+  store.despesas.filter(x => !x.pago && x.vencimento && diasAte(x.vencimento) <= 7).forEach(x => {
+    lista.push({ data: x.vencimento, tit: `${x.descricao} · ${moeda(x.valor)}`, sub: x.categoria || '', tipo: 'Despesa', ir: 'financeiro' });
   });
   store.servicos.filter(x => x.status !== 'concluido' && x.prazo && diasAte(x.prazo) <= LIMITE).forEach(x => {
     lista.push({ data: x.prazo, tit: x.servico, sub: porId('projetos', x.projeto_id)?.nome || '', tipo: 'Serviço', ir: `projeto/${x.projeto_id}/servicos` });
