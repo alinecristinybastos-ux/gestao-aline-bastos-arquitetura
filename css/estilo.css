@@ -471,3 +471,4 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
   .cartao-cab select { max-width: 100%; }
   .filtros select { max-width: 100%; }
 }
+input[type=checkbox], input[type=radio] { accent-color: var(--verde); }
