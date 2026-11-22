@@ -32,8 +32,14 @@ export async function iniciar() {
 }
 
 export async function entrar(email, senha) {
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
-  if (error) throw new Error(error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : error.message);
+  let data, error;
+  try { ({ data, error } = await sb.auth.signInWithPassword({ email, password: senha })); }
+  catch { throw new Error('Não foi possível conectar ao servidor. Verifique a internet e tente de novo.'); }
+  if (error) {
+    if (error.message === 'Invalid login credentials') throw new Error('E-mail ou senha incorretos.');
+    if (/fetch|network/i.test(error.message)) throw new Error('Não foi possível conectar ao servidor. Verifique a internet e tente de novo.');
+    throw new Error(error.message);
+  }
   return data.user;
 }
 export async function sair() { if (sb) await sb.auth.signOut(); location.reload(); }
