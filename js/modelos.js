@@ -99,7 +99,7 @@ const CONTRATACAO = {
   chave: 'contratacao', nome: 'Contratação', dias: 3,
   entrega: 'Contrato assinado, prazos definidos e entrada recebida.',
   grupos: {
-    'Cadastro e contrato': 'Cadastrar cliente e responsáveis pelas decisões|Aprovar proposta / orçamento|Receber o contrato assinado|Definir prazos de cada fase|Programar os pagamentos (entrada, 3D, entrega final)|Receber pagamento da entrada|Emitir RRT',
+    'Cadastro e contrato': 'Cadastrar cliente e responsáveis pelas decisões|Aprovar proposta / orçamento|Receber o contrato assinado|Definir prazos de cada fase|Programar os pagamentos (entrada, 3D, entrega final)|Receber pagamento da entrada',
   },
 };
 
@@ -166,6 +166,7 @@ const ARQ_EXECUTIVO = {
     '6.7 Escadas e rampas': 'Larguras|Pisos e espelhos|Patamares|Inclinações|Guarda-corpos|Corrimãos|Revestimentos|Detalhes de acabamento|Compatibilização estrutural',
     '6.8 Áreas molhadas': 'Caimentos|Ralos|Desníveis|Impermeabilização|Soleiras|Revestimentos|Encontros entre materiais|Detalhes de boxes e áreas de banho',
     '6.9 Memorial e especificações': 'Descrição dos sistemas construtivos|Especificação dos materiais|Acabamentos|Revestimentos|Esquadrias|Cobertura|Critérios de execução pertinentes|Referências normativas aplicáveis',
+    '6.11 Responsabilidade técnica': 'Conferir a área construída final|Emitir RRT de projeto',
   },
 };
 
@@ -260,6 +261,7 @@ const INT_EXECUTIVO = {
     '4.11 Detalhamento de banheiros': 'Planta de layout|Paginação de piso|Paginação de paredes|Vistas internas|Detalhamento do box|Detalhamento de nichos|Detalhamento de bancadas|Detalhamento de espelhos|Detalhamento de marcenaria|Localização de louças|Localização de metais|Iluminação|Pontos elétricos|Pontos hidráulicos|Impermeabilização e caimentos, conforme escopo e projetos complementares',
     '4.12 Detalhamento de cozinhas': 'Layout executivo|Vistas internas|Marcenaria|Bancadas|Localização da cuba|Localização do cooktop|Localização dos fornos|Localização da geladeira|Localização da lava-louças|Espaços de ventilação dos equipamentos|Pontos elétricos|Pontos hidráulicos|Coifa e exaustão|Iluminação|Revestimentos|Conferência das especificações dos fabricantes',
     '4.13 Memorial de especificações': 'Relação de revestimentos|Relação de pisos|Relação de rodapés|Especificação de tintas|Especificação de MDFs|Especificação de pedras|Relação de louças|Relação de metais|Relação de luminárias|Relação de ferragens relevantes|Relação de equipamentos|Códigos, fabricantes e modelos|Quantitativos, quando contratados|Observações técnicas de instalação',
+    '4.14 Responsabilidade técnica': 'Conferir a área de intervenção final|Emitir RRT de projeto',
   },
 };
 
@@ -327,7 +329,7 @@ function paginacaoPiso() {
     grupos: { 'Estudo': 'Estudar sentido de assentamento|Estudar ponto de início e cortes|Apresentação ao cliente|Registro das alterações|Aprovação formal' },
   }, {
     chave: 'executivo', nome: 'Projeto executivo de paginação de piso', dias: 10, entrega: 'Planta de paginação executiva.',
-    grupos: { 'Planta de paginação de pisos': PAGINACAO_PISO_GRUPO, 'Quantitativos': 'Quantificar peças e área por ambiente|Prever percentual de perda|Especificar rejunte e argamassa' },
+    grupos: { 'Planta de paginação de pisos': PAGINACAO_PISO_GRUPO, 'Quantitativos': 'Quantificar peças e área por ambiente|Prever percentual de perda|Especificar rejunte e argamassa', 'Responsabilidade técnica': 'Emitir RRT de projeto' },
   }, clonar(REVISAO), clonar(ENTREGA)];
 }
 
@@ -340,7 +342,7 @@ function forro() {
     grupos: { 'Estudo': 'Estudar rebaixos e sancas|Estudar integração com iluminação|Apresentação ao cliente|Registro das alterações|Aprovação formal' },
   }, {
     chave: 'executivo', nome: 'Projeto executivo de forro', dias: 10, entrega: 'Planta de forro executiva com cortes e detalhes.',
-    grupos: { 'Planta de forro': FORRO_GRUPO, 'Detalhamento': 'Cortes e detalhes de sancas e cortineiros|Especificação de materiais|Quantitativos, quando contratados' },
+    grupos: { 'Planta de forro': FORRO_GRUPO, 'Detalhamento': 'Cortes e detalhes de sancas e cortineiros|Especificação de materiais|Quantitativos, quando contratados', 'Responsabilidade técnica': 'Emitir RRT de projeto' },
   }, clonar(REVISAO), clonar(ENTREGA)];
 }
 

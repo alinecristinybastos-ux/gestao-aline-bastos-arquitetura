@@ -2,9 +2,9 @@
 //  Regras do escritório: criação de projeto, fases, progresso,
 //  situação dos recebimentos e dos complementares.
 // =====================================================================
-import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221512';
-import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221512';
-import { hoje, diasAte } from './util.js?v=202611221512';
+import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221522';
+import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221522';
+import { hoje, diasAte } from './util.js?v=202611221522';
 
 export const nomeCliente = (id) => porId('clientes', id)?.nome || 'Sem cliente';
 export const nomeParceiro = (id) => porId('parceiros', id)?.nome || 'A definir';
