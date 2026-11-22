@@ -86,7 +86,15 @@ a { color: var(--verde); text-decoration: none; }
 .lateral .rodape-lateral button:hover { color: #fff; }
 .selo-demo { background: var(--terracota); color: #fff; border-radius: 6px; padding: 6px 9px; font-size: .78rem; margin-bottom: 8px; line-height: 1.35; }
 
-.principal { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.principal { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; isolation: isolate; }
+/* marca d'água (isologo) fixa no canto inferior direito da área bege */
+.principal::before {
+  content: ''; position: fixed; z-index: -1; pointer-events: none;
+  right: -70px; bottom: -90px; width: min(560px, 55vw); aspect-ratio: 720 / 847;
+  background: url('../assets/marca-dagua.png') no-repeat right bottom / contain;
+}
+@media (max-width: 860px) { .principal::before { right: -60px; bottom: -60px; width: 70vw; } }
+@media print { .principal::before { display: none; } }
 .topo-movel { display: none; }
 .conteudo { padding: 28px 34px 60px; max-width: 1320px; width: 100%; margin: 0 auto; }
 
