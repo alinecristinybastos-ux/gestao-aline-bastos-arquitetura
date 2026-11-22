@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221305';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221305';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221305';
-import { hoje, somarDias } from './util.js?v=202611221305';
+import { store, inserir, atualizar } from './dados.js?v=202611221307';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221307';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221307';
+import { hoje, somarDias } from './util.js?v=202611221307';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -41,7 +41,7 @@ async function projetoExemplo({ cliente, nome, categoria, tipo, intervencao, ini
 
 export async function criarDadosExemplo() {
   const [costa, clinica, sabor, helena, rodrigo] = await inserir('clientes', [
-    { nome: 'Mariana e Rafael Costa', telefone: '(31) 99876-1122', email: 'mariana.costa@email.com', cidade: 'Belo Horizonte', origem: 'Indicação', documento: '123.456.789-00' },
+    { familia: [{ nome: 'Rafael Costa', parentesco: 'Cônjuge', idade: 41, idade_em: hoje(), profissao: 'Médico', obs: 'Plantões noturnos — quarto precisa de blackout' }, { nome: 'Laura', parentesco: 'Filho(a)', idade: 9, idade_em: hoje(), profissao: 'Estudante', obs: 'Faz balé' }, { nome: 'Pedro', parentesco: 'Filho(a)', idade: 5, idade_em: hoje() }], nome: 'Mariana e Rafael Costa', telefone: '(31) 99876-1122', email: 'mariana.costa@email.com', cidade: 'Belo Horizonte', origem: 'Indicação', documento: '123.456.789-00' },
     { tipo_pessoa: 'juridica', responsaveis: [{ nome: 'Dra. Paula Mendes', cargo: 'Sócia-diretora', telefone: '(31) 98765-4433' }, { nome: 'Lúcia Ramos', cargo: 'Gerente administrativa', email: 'lucia@viverbem.com' }], nome: 'Clínica Viver Bem Ltda', telefone: '(31) 98765-4433', email: 'contato@viverbem.com', cidade: 'Contagem', origem: 'Instagram' },
     { tipo_pessoa: 'juridica', responsaveis: [{ nome: 'Eng. Roberto Saldanha', cargo: 'Gerente de engenharia', telefone: '(31) 99876-5544' }], nome: 'Sabor do Campo Alimentos Ltda', telefone: '(31) 3333-2211', email: 'obras@sabordocampo.com', cidade: 'Betim', origem: 'Construtora parceira', documento: '12.345.678/0001-90' },
     { nome: 'Helena Duarte', telefone: '(31) 99111-2233', email: 'helena.duarte@email.com', cidade: 'Nova Lima', origem: 'Cliente antigo' },

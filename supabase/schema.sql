@@ -13,6 +13,7 @@ create table if not exists clientes (
   nome text not null,        -- nome completo ou razão social
   documento text,            -- CPF / CNPJ
   responsaveis jsonb default '[]'::jsonb, -- empresa: [{nome, cargo, telefone, email}]
+  familia jsonb default '[]'::jsonb,      -- pessoa física: [{nome, parentesco, idade, idade_em, profissao, obs}]
   telefone text,
   email text,
   endereco text,
@@ -26,6 +27,7 @@ create table if not exists clientes (
 -- atualização (para bancos criados antes): tipo de pessoa e responsáveis
 alter table clientes add column if not exists tipo_pessoa text default 'fisica';
 alter table clientes add column if not exists responsaveis jsonb default '[]'::jsonb;
+alter table clientes add column if not exists familia jsonb default '[]'::jsonb;
 
 -- ---------- PROJETOS ----------
 create table if not exists projetos (

@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221305';
-import { h, icone, formModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221305';
-import { EQUIPE } from './config.js?v=202611221305';
-import { DISCIPLINAS } from './modelos.js?v=202611221305';
-import { nav } from './nav.js?v=202611221305';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js?v=202611221305';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221307';
+import { h, icone, formModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221307';
+import { EQUIPE } from './config.js?v=202611221307';
+import { DISCIPLINAS } from './modelos.js?v=202611221307';
+import { nav } from './nav.js?v=202611221307';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js?v=202611221307';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -28,13 +28,34 @@ export function tagPrazo(iso, concluido) {
 export const ehPJ = (c) => c?.tipo_pessoa === 'juridica';
 export const responsaveisDe = (c) => (Array.isArray(c?.responsaveis) ? c.responsaveis : []).filter(r => r && r.nome);
 
+export const PARENTESCOS = ['Cônjuge', 'Filho(a)', 'Enteado(a)', 'Pai', 'Mãe', 'Sogro(a)', 'Avô / Avó', 'Neto(a)', 'Irmão(ã)', 'Outro familiar', 'Funcionário(a) da casa', 'Outro morador'];
+/** Idade atualizada: guarda a idade informada e a data em que foi informada. */
+export function idadeAtual(f) {
+  if (f?.idade === '' || f?.idade == null) return null;
+  const anos = f.idade_em ? Math.floor((new Date() - new Date(f.idade_em + 'T12:00:00')) / (365.25 * 86400000)) : 0;
+  return Number(f.idade) + Math.max(0, anos);
+}
+export const familiaDe = (c) => (Array.isArray(c?.familia) ? c.familia : []).filter(f => f && f.nome);
+
+function linhaFamilia(f = {}) {
+  const idade = idadeAtual(f);
+  return `<div class="fam-linha" data-idade-em="${h(f.idade_em || '')}" data-idade-orig="${h(f.idade ?? '')}">
+    <input class="entrada" data-fam="nome" placeholder="Nome *" value="${h(f.nome || '')}">
+    <select class="entrada" data-fam="parentesco"><option value="">Parentesco…</option>${PARENTESCOS.map(p => `<option ${p === f.parentesco ? 'selected' : ''}>${h(p)}</option>`).join('')}</select>
+    <input class="entrada" data-fam="idade" type="number" min="0" max="120" placeholder="Idade" value="${idade ?? ''}">
+    <input class="entrada" data-fam="profissao" placeholder="Profissão / ocupação" value="${h(f.profissao || '')}">
+    <input class="entrada" data-fam="obs" placeholder="Necessidades, rotina, hobbies…" value="${h(f.obs || '')}">
+    <button type="button" class="btn-icone" data-rm-linha title="Remover">${icone('lixo', 15)}</button>
+  </div>`;
+}
+
 function linhaResponsavel(r = {}) {
   return `<div class="resp-linha">
     <input class="entrada" data-resp="nome" placeholder="Nome do responsável *" value="${h(r.nome || '')}">
     <input class="entrada" data-resp="cargo" placeholder="Cargo / função" value="${h(r.cargo || '')}">
     <input class="entrada" data-resp="telefone" type="tel" placeholder="Telefone / WhatsApp" value="${h(r.telefone || '')}">
     <input class="entrada" data-resp="email" type="email" placeholder="E-mail" value="${h(r.email || '')}">
-    <button type="button" class="btn-icone" data-rm-resp title="Remover responsável">${icone('lixo', 15)}</button>
+    <button type="button" class="btn-icone" data-rm-linha title="Remover responsável">${icone('lixo', 15)}</button>
   </div>`;
 }
 
@@ -60,6 +81,15 @@ export function formCliente(cliente = null, aoSalvar) {
       d.responsaveis = pj ? [...modal.el.querySelectorAll('.resp-linha')].map(l => Object.fromEntries(
         [...l.querySelectorAll('[data-resp]')].map(i => [i.dataset.resp, i.value.trim()]))).filter(r => r.nome) : [];
       if (pj && !d.responsaveis.length) throw new Error('Informe pelo menos um responsável pelo projeto');
+      d.familia = pj ? [] : [...modal.el.querySelectorAll('.fam-linha')].map(l => {
+        const f = Object.fromEntries([...l.querySelectorAll('[data-fam]')].map(i => [i.dataset.fam, i.value.trim()]));
+        // a idade é guardada com a data em que foi informada (assim se atualiza com os anos)
+        const orig = { idade: l.dataset.idadeOrig, idade_em: l.dataset.idadeEm };
+        if (f.idade === '') { f.idade = null; f.idade_em = null; }
+        else if (orig.idade_em && String(idadeAtual(orig)) === f.idade) { f.idade = Number(orig.idade); f.idade_em = orig.idade_em; }
+        else { f.idade = Number(f.idade); f.idade_em = hoje(); }
+        return f;
+      }).filter(f => f.nome);
       if (pj) d.aniversario = null;
       let c;
       if (cliente) c = await atualizar('clientes', cliente.id, d);
@@ -69,33 +99,40 @@ export function formCliente(cliente = null, aoSalvar) {
     },
   });
 
-  // bloco de responsáveis (só para pessoa jurídica)
+  // blocos extras: responsáveis (empresa) e família (pessoa física)
   const form = m.el.querySelector('form');
-  const bloco = document.createElement('div');
-  bloco.className = 'campo bloco-resp';
-  bloco.innerHTML = `<div class="secao-form" style="grid-column:auto">Responsáveis pelo projeto na empresa</div>
-    <small>Quem decide e acompanha o projeto. Pode incluir mais de um.</small>
-    <div class="lista-resp">${responsaveisDe(cliente).map(linhaResponsavel).join('')}</div>
-    <button type="button" class="btn btn-peq" data-add-resp style="align-self:flex-start">${icone('mais', 14)} Adicionar responsável</button>`;
+  const criarBloco = (classe, titulo, ajuda, linhas, botao, novaLinha) => {
+    const bl = document.createElement('div');
+    bl.className = `campo bloco-resp ${classe}`;
+    bl.innerHTML = `<div class="secao-form" style="grid-column:auto">${titulo}</div><small>${ajuda}</small>
+      <div class="lista-linhas">${linhas}</div>
+      <button type="button" class="btn btn-peq" data-add-linha style="align-self:flex-start">${icone('mais', 14)} ${botao}</button>`;
+    const lista = bl.querySelector('.lista-linhas');
+    const ligar = () => lista.querySelectorAll('[data-rm-linha]').forEach(b => { b.onclick = () => b.closest('.resp-linha, .fam-linha').remove(); });
+    bl.adicionar = () => { lista.insertAdjacentHTML('beforeend', novaLinha()); ligar(); };
+    bl.vazio = () => !lista.children.length;
+    bl.querySelector('[data-add-linha]').addEventListener('click', () => { bl.adicionar(); lista.lastElementChild.querySelector('input').focus(); });
+    ligar();
+    return bl;
+  };
+  const bloco = criarBloco('bloco-pj', 'Responsáveis pelo projeto na empresa', 'Quem decide e acompanha o projeto. Pode incluir mais de um.',
+    responsaveisDe(cliente).map(linhaResponsavel).join(''), 'Adicionar responsável', linhaResponsavel);
+  const blocoFam = criarBloco('bloco-fam', 'Família / moradores da casa', 'Todos que vão usar os ambientes. A idade se atualiza sozinha com o passar dos anos.',
+    familiaDe(cliente).map(linhaFamilia).join(''), 'Adicionar pessoa', linhaFamilia);
   form.insertBefore(bloco, form.elements.telefone.closest('.campo'));
-  const lista = bloco.querySelector('.lista-resp');
-  const ligarRemover = () => lista.querySelectorAll('[data-rm-resp]').forEach(b => { b.onclick = () => { b.closest('.resp-linha').remove(); }; });
-  bloco.querySelector('[data-add-resp]').addEventListener('click', () => {
-    lista.insertAdjacentHTML('beforeend', linhaResponsavel()); ligarRemover();
-    lista.lastElementChild.querySelector('input').focus();
-  });
-  ligarRemover();
+  form.insertBefore(blocoFam, form.elements.origem.closest('.campo'));
 
   const rotulo = (nome, txt) => { form.elements[nome].closest('.campo').querySelector('label').firstChild.textContent = txt; };
   const alternar = () => {
     const pj = form.elements.tipo_pessoa.value === 'juridica';
     bloco.classList.toggle('oculto', !pj);
+    blocoFam.classList.toggle('oculto', pj);
     rotulo('nome', pj ? 'Razão social / nome da empresa' : 'Nome completo');
     rotulo('documento', pj ? 'CNPJ' : 'CPF');
     rotulo('telefone', pj ? 'Telefone da empresa' : 'Telefone / WhatsApp');
     rotulo('email', pj ? 'E-mail da empresa' : 'E-mail');
     form.elements.aniversario.closest('.campo').classList.toggle('oculto', pj);
-    if (pj && !lista.children.length) { lista.insertAdjacentHTML('beforeend', linhaResponsavel()); ligarRemover(); }
+    if (pj && bloco.vazio()) bloco.adicionar();
   };
   form.elements.tipo_pessoa.addEventListener('change', alternar);
   alternar();

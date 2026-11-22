@@ -2,20 +2,20 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221305';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221305';
-import { nav } from '../nav.js?v=202611221305';
-import { EQUIPE } from '../config.js?v=202611221305';
-import { CATEGORIAS } from '../modelos.js?v=202611221305';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221307';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221307';
+import { nav } from '../nav.js?v=202611221307';
+import { EQUIPE } from '../config.js?v=202611221307';
+import { CATEGORIAS } from '../modelos.js?v=202611221307';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento,
-} from '../negocio.js?v=202611221305';
+} from '../negocio.js?v=202611221307';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
-  ligarLinhasComplementares, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe,
-} from '../componentes.js?v=202611221305';
-import { STATUS_PROJ } from './projetos.js?v=202611221305';
+  ligarLinhasComplementares, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
+} from '../componentes.js?v=202611221307';
+import { STATUS_PROJ } from './projetos.js?v=202611221307';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -405,7 +405,11 @@ function abaDados(area, p) {
       <button class="btn btn-peq" id="ed-proj">${icone('editar', 14)} Editar</button>
       <button class="btn btn-peq btn-leve" id="rm-proj">${icone('lixo', 14)} Excluir projeto</button></div>
     <div class="tabela-envolve"><table class="tabela"><tbody>${linhas.map(([k, v]) => `<tr><td class="fraco" style="width:220px">${k}</td><td>${h(v || '—')}</td></tr>`).join('')}</tbody></table></div>
-  </div>`;
+    </div>
+  ${familiaDe(porId('clientes', p.cliente_id)).length ? `<div class="cartao" style="margin-top:18px"><div class="cartao-cab"><h2>Família / moradores (para o briefing)</h2></div>
+    <div class="tabela-envolve"><table class="tabela"><thead><tr><th>Nome</th><th>Parentesco</th><th>Idade</th><th>Profissão</th><th>Observações</th></tr></thead><tbody>
+    ${familiaDe(porId('clientes', p.cliente_id)).map(f => `<tr><td>${h(f.nome)}</td><td>${h(f.parentesco || '')}</td><td>${idadeAtual(f) ?? ''}</td><td>${h(f.profissao || '')}</td><td class="fraco">${h(f.obs || '')}</td></tr>`).join('')}
+    </tbody></table></div></div>` : ''}`;
   area.querySelector('#ed-proj').addEventListener('click', () => formModal({
     titulo: 'Editar projeto', valores: p,
     campos: [

@@ -382,6 +382,9 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
 .lista-resp { display: flex; flex-direction: column; gap: 8px; }
 .resp-linha { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1.3fr 32px; gap: 6px; align-items: center; }
 .resp-linha .entrada { padding: 7px 9px; font-size: .9rem; }
+.fam-linha { display: grid; grid-template-columns: 1.3fr 1.1fr 64px 1fr 1.3fr 32px; gap: 6px; align-items: center; }
+.fam-linha .entrada { padding: 7px 9px; font-size: .9rem; }
+.lista-linhas { display: flex; flex-direction: column; gap: 8px; }
 .resp-lista { list-style: none; }
 .resp-lista li { padding: 10px 18px; border-bottom: 1px solid var(--linha); }
 .resp-lista li:last-child { border-bottom: 0; }
@@ -466,7 +469,8 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
   .resumo-fin { grid-template-columns: 1fr; }
   .busca input { min-width: 0; width: 100%; }
   .item .acoes-item { opacity: 1; }
-  .resp-linha { grid-template-columns: 1fr 32px; }
+  .resp-linha, .fam-linha { grid-template-columns: 1fr 32px; padding-bottom: 8px; border-bottom: 1px dashed var(--linha-forte); }
+  .fam-linha .entrada:not([data-fam=nome]) { grid-column: 1; }
   .resp-linha .entrada:not([data-resp=nome]) { grid-column: 1; }
 }
 @media (max-width: 520px) {

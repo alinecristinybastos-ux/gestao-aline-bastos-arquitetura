@@ -1,12 +1,12 @@
 // =====================================================================
 //  CLIENTES — lista e ficha do cliente
 // =====================================================================
-import { store, porId, remover } from '../dados.js?v=202611221305';
-import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221305';
-import { nav } from '../nav.js?v=202611221305';
-import { recebimentosDo } from '../negocio.js?v=202611221305';
-import { formCliente, blocoAnexos, ligarBlocoAnexos, ehPJ, responsaveisDe } from '../componentes.js?v=202611221305';
-import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221305';
+import { store, porId, remover } from '../dados.js?v=202611221307';
+import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221307';
+import { nav } from '../nav.js?v=202611221307';
+import { recebimentosDo } from '../negocio.js?v=202611221307';
+import { formCliente, blocoAnexos, ligarBlocoAnexos, ehPJ, responsaveisDe, familiaDe, idadeAtual } from '../componentes.js?v=202611221307';
+import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221307';
 
 let busca = '';
 
@@ -70,6 +70,11 @@ function ficha(el, id) {
             return `<li><div>${h(r.nome)}${r.cargo ? ` <small>· ${h(r.cargo)}</small>` : ''}</div>
               <small>${[r.telefone && (z ? `<a target="_blank" rel="noopener" href="https://wa.me/${z.length <= 11 ? '55' + z : z}">${h(r.telefone)}</a>` : h(r.telefone)), r.email && `<a href="mailto:${h(r.email)}">${h(r.email)}</a>`].filter(Boolean).join(' · ')}</small></li>`;
           }).join('')}</ul>` : '<div class="vazio">Nenhum responsável informado.</div>'}</div>` : ''}
+        ${!ehPJ(c) ? `<div class="cartao"><div class="cartao-cab"><h2>Família / moradores</h2><button class="btn btn-peq btn-leve" data-ed-resp>${icone('editar', 14)}</button></div>
+          ${familiaDe(c).length ? `<ul class="resp-lista">${familiaDe(c).map(f => `<li><div>${h(f.nome)}${f.parentesco ? ` <small>· ${h(f.parentesco)}</small>` : ''}</div>
+            <small>${[idadeAtual(f) != null && `${idadeAtual(f)} anos`, f.profissao].filter(Boolean).map(h).join(' · ')}</small>
+            ${f.obs ? `<div><small style="color:var(--verde)">${h(f.obs)}</small></div>` : ''}</li>`).join('')}</ul>`
+            : `<div class="vazio">Nenhum morador cadastrado.<br><button class="btn btn-peq" data-ed-resp2>${icone('mais', 14)} Cadastrar família</button></div>`}</div>` : ''}
         <div class="cartao"><div class="cartao-cab"><h2>Contato</h2></div>
           <table class="tabela"><tbody>
             <tr><td class="fraco">${ehPJ(c) ? 'Telefone da empresa' : 'Telefone'}</td><td>${h(c.telefone || '—')}</td></tr>
@@ -88,7 +93,7 @@ function ficha(el, id) {
       </div>
     </div>`;
   el.querySelector('#ed-cli').addEventListener('click', () => formCliente(c));
-  el.querySelector('[data-ed-resp]')?.addEventListener('click', () => formCliente(c));
+  el.querySelectorAll('[data-ed-resp], [data-ed-resp2]').forEach(b => b.addEventListener('click', () => formCliente(c)));
   el.querySelector('#np-cli').addEventListener('click', () => novoProjeto({ cliente_id: id, nome: `Projeto ${c.nome.split(' ')[0]}` }));
   el.querySelector('#rm-cli').addEventListener('click', async () => {
     if (ps.length) return confirmar('Este cliente tem projetos. Exclua ou transfira os projetos antes.', { ok: 'Entendi' });
