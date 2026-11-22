@@ -4,7 +4,7 @@
 //  - Sem configuração: modo demonstração (localStorage deste navegador)
 //  Todas as tabelas ficam em memória em `store` para as telas lerem.
 // =====================================================================
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221439';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221501';
 
 export const TABELAS = ['clientes', 'projetos', 'etapas', 'itens', 'recebimentos',
   'orcamentos', 'parceiros', 'complementares', 'pagamentos_parceiros', 'pendencias', 'servicos', 'despesas', 'tarefas', 'anexos'];
@@ -45,9 +45,21 @@ export async function entrar(email, senha) {
 export async function sair() { if (sb) await sb.auth.signOut(); location.reload(); }
 
 // ---------------------------------------------------------------- leitura
+// O Supabase devolve no máximo 1.000 linhas por consulta: lê em páginas até acabar.
+const PAGINA = 1000;
+async function lerTabelaInteira(tabela) {
+  const linhas = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await sb.from(tabela).select('*').order('id').range(de, de + PAGINA - 1);
+    if (error) return { error };
+    linhas.push(...(data || []));
+    if (!data || data.length < PAGINA) return { data: linhas };
+  }
+}
+
 export async function carregarTudo() {
   if (modoDemo) return;
-  const res = await Promise.all(TABELAS.map(t => sb.from(t).select('*')));
+  const res = await Promise.all(TABELAS.map(lerTabelaInteira));
   const faltando = [];
   res.forEach((r, i) => {
     if (r.error) {
