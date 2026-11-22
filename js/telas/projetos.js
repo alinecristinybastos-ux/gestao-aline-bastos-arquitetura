@@ -1,12 +1,12 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611221330';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221330';
-import { nav } from '../nav.js?v=202611221330';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO } from '../modelos.js?v=202611221330';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo } from '../negocio.js?v=202611221330';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares } from '../componentes.js?v=202611221330';
+import { store, atualizar } from '../dados.js?v=202611221343';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221343';
+import { nav } from '../nav.js?v=202611221343';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO } from '../modelos.js?v=202611221343';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo } from '../negocio.js?v=202611221343';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares } from '../componentes.js?v=202611221343';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };

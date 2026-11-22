@@ -4,10 +4,10 @@
 //  - Sem configuração: modo demonstração (localStorage deste navegador)
 //  Todas as tabelas ficam em memória em `store` para as telas lerem.
 // =====================================================================
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221330';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221343';
 
 export const TABELAS = ['clientes', 'projetos', 'etapas', 'itens', 'recebimentos',
-  'orcamentos', 'parceiros', 'complementares', 'tarefas', 'anexos'];
+  'orcamentos', 'parceiros', 'complementares', 'pagamentos_parceiros', 'tarefas', 'anexos'];
 
 export const store = Object.fromEntries(TABELAS.map(t => [t, []]));
 export const modoDemo = !SUPABASE_URL || !SUPABASE_ANON_KEY;
@@ -48,18 +48,27 @@ export async function sair() { if (sb) await sb.auth.signOut(); location.reload(
 export async function carregarTudo() {
   if (modoDemo) return;
   const res = await Promise.all(TABELAS.map(t => sb.from(t).select('*')));
+  const faltando = [];
   res.forEach((r, i) => {
-    if (r.error) throw new Error(`Erro ao ler ${TABELAS[i]}: ${r.error.message}`);
+    if (r.error) {
+      // tabela nova ainda não criada no banco: segue funcionando sem ela
+      if (/does not exist|could not find the table|schema cache/i.test(r.error.message)) { faltando.push(TABELAS[i]); store[TABELAS[i]] = []; return; }
+      throw new Error(`Erro ao ler ${TABELAS[i]}: ${r.error.message}`);
+    }
     store[TABELAS[i]] = r.data || [];
   });
+  tabelasFaltando.splice(0, tabelasFaltando.length, ...faltando);
 }
+
+/** Tabelas que ainda não existem no banco (precisa rodar o SQL de atualização). */
+export const tabelasFaltando = [];
 
 export const porId = (tabela, id) => store[tabela].find(r => r.id === id);
 
 // ---------------------------------------------------------------- escrita
 function erroBanco(error) {
-  if (/column|schema cache/i.test(error.message)) {
-    return new Error('O banco precisa de uma atualização (falta uma coluna). Rode o SQL de atualização no Supabase e tente de novo.');
+  if (/column|schema cache|does not exist|could not find the table/i.test(error.message)) {
+    return new Error('O banco precisa de uma atualização. Rode o SQL de atualização no Supabase e tente de novo.');
   }
   return new Error(error.message);
 }

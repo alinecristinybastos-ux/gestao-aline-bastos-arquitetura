@@ -2,9 +2,9 @@
 //  Regras do escritório: criação de projeto, fases, progresso,
 //  situação dos recebimentos e dos complementares.
 // =====================================================================
-import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221330';
-import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221330';
-import { hoje, diasAte } from './util.js?v=202611221330';
+import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221343';
+import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221343';
+import { hoje, diasAte } from './util.js?v=202611221343';
 
 export const nomeCliente = (id) => porId('clientes', id)?.nome || 'Sem cliente';
 export const nomeParceiro = (id) => porId('parceiros', id)?.nome || 'A definir';
@@ -76,6 +76,32 @@ export function dataReferencia(r) {
 export const STATUS_COMPL = {
   a_enviar: 'A enviar', enviado: 'Enviado', andamento: 'Em andamento', revisao: 'Em revisão', entregue: 'Entregue',
 };
+/**
+ * Conta corrente do parceiro: soma o que ele cobrou nos complementares e
+ * abate os pagamentos lançados, do complementar mais antigo para o mais novo.
+ */
+export function contaParceiro(parceiroId) {
+  const compl = store.complementares.filter(c => c.parceiro_id === parceiroId && Number(c.valor) > 0)
+    .sort((a, b) => String(a.enviado_em || a.criado_em || a.prazo || '').localeCompare(String(b.enviado_em || b.criado_em || b.prazo || '')));
+  const pagamentos = store.pagamentos_parceiros.filter(p => p.parceiro_id === parceiroId)
+    .sort((a, b) => String(b.data).localeCompare(String(a.data)));
+  const total = compl.reduce((s, c) => s + Number(c.valor), 0);
+  const pago = pagamentos.reduce((s, p) => s + Number(p.valor || 0), 0);
+  let resta = pago;
+  const quitacao = {};
+  compl.forEach(c => { const v = Math.min(Number(c.valor), Math.max(0, resta)); quitacao[c.id] = v; resta -= v; });
+  return { total, pago, saldo: +(total - pago).toFixed(2), credito: Math.max(0, +(pago - total).toFixed(2)), quitacao, pagamentos, compl };
+}
+
+/** Situação de pagamento de um complementar dentro da conta do parceiro. */
+export function pagamentoCompl(c) {
+  if (!Number(c.valor)) return { cod: 'sem_valor', pago: 0, falta: 0 };
+  if (!c.parceiro_id) return { cod: 'apagar', pago: 0, falta: Number(c.valor) };
+  const pago = contaParceiro(c.parceiro_id).quitacao[c.id] || 0;
+  const falta = +(Number(c.valor) - pago).toFixed(2);
+  return { cod: falta <= 0.009 ? 'pago' : pago > 0 ? 'parcial' : 'apagar', pago, falta };
+}
+
 export function complAtrasado(c) { return c.status !== 'entregue' && c.prazo && diasAte(c.prazo) < 0; }
 
 // ---------------------------------------------------------------- criação de projeto

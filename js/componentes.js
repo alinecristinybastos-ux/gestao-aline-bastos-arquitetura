@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221330';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221330';
-import { EQUIPE } from './config.js?v=202611221330';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS } from './modelos.js?v=202611221330';
-import { nav } from './nav.js?v=202611221330';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo } from './negocio.js?v=202611221330';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221343';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221343';
+import { EQUIPE } from './config.js?v=202611221343';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS } from './modelos.js?v=202611221343';
+import { nav } from './nav.js?v=202611221343';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl } from './negocio.js?v=202611221343';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -200,8 +200,8 @@ export function formComplementar(c = null, padrao = {}) {
     { nome: 'enviado_em', rotulo: 'Enviado em', tipo: 'date', largura: 'terco' },
     { nome: 'prazo', rotulo: 'Prazo de entrega do parceiro', tipo: 'date', largura: 'terco' },
     { nome: 'entregue_em', rotulo: 'Entregue em', tipo: 'date', largura: 'terco' },
-    { nome: 'valor', rotulo: 'Valor cobrado pelo parceiro', tipo: 'moeda', largura: 'meia' },
-    { nome: 'pago_em', rotulo: 'Pago ao parceiro em', tipo: 'date', largura: 'meia', ajuda: 'Preencha quando pagar' },
+    { nome: 'valor', rotulo: 'Valor cobrado pelo parceiro', tipo: 'moeda', largura: 'meia',
+      ajuda: 'Os pagamentos ao parceiro são lançados em Parceiros e abatidos automaticamente' },
     { nome: 'informacoes', rotulo: 'Informações relevantes enviadas ao parceiro', tipo: 'textarea', linhas: 5,
       placeholder: 'Ex.: Base arquitetônica rev. 02; carga extra na laje da piscina; padrão de entrada de energia trifásico…' },
     { nome: 'arquivos', rotulo: 'Anexar arquivos (plantas, DWG, PDF…)', tipo: 'arquivo', multiplo: true },
@@ -213,7 +213,6 @@ export function formComplementar(c = null, padrao = {}) {
     extraRodape: c ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
     onSalvar: async (d) => {
       const arquivos = d.arquivos || []; delete d.arquivos;
-      d.pago = !!d.pago_em;
       if (d.status === 'entregue' && !d.entregue_em) d.entregue_em = hoje();
       if (d.status !== 'a_enviar' && !d.enviado_em) d.enviado_em = hoje();
       let reg;
@@ -251,12 +250,73 @@ export function linhaComplementar(c, { mostrarProjeto = true } = {}) {
     <td><span class="tag tag-${st}">${complAtrasado(c) ? 'Atrasado · ' : ''}${h(STATUS_COMPL[c.status] || c.status)}</span></td>
     <td>${c.status === 'entregue' ? `<span class="fraco">entregue ${data(c.entregue_em)}</span>` : tagPrazo(c.prazo)}</td>
     <td class="num">${Number(c.valor) ? moeda(c.valor) : '—'}</td>
-    <td>${c.pago ? '<span class="tag tag-ok">Pago</span>' : Number(c.valor) ? '<span class="tag tag-alerta">A pagar</span>' : '<span class="fraco">valor a definir</span>'}</td>
+    <td>${tagPagamentoCompl(c)}</td>
     <td class="fraco">${n ? `${icone('anexo', 14)} ${n}` : ''}</td>
   </tr>`;
 }
+export function tagPagamentoCompl(c) {
+  const pg = pagamentoCompl(c);
+  if (pg.cod === 'sem_valor') return '<span class="fraco">valor a definir</span>';
+  if (pg.cod === 'pago') return '<span class="tag tag-ok">Quitado</span>';
+  if (pg.cod === 'parcial') return `<span class="tag tag-areia" title="Pago ${moeda(pg.pago)}">Falta ${moeda(pg.falta)}</span>`;
+  return '<span class="tag tag-alerta">A pagar</span>';
+}
+
 export function ligarLinhasComplementares(raiz) {
   raiz.querySelectorAll('[data-compl]').forEach(tr => tr.addEventListener('click', () => formComplementar(porId('complementares', tr.dataset.compl))));
+}
+
+// ---------------------------------------------------------------- pagamentos aos parceiros
+export function formPagamentoParceiro(pg = null, parceiroId = null) {
+  const pid = pg?.parceiro_id || parceiroId;
+  const saldoAtual = pid ? contaParceiro(pid).saldo : null;
+  const campos = [
+    { nome: 'parceiro_id', rotulo: 'Parceiro', tipo: 'select', opcoes: opcoesParceiros(), obrigatorio: true },
+    { nome: 'data', rotulo: 'Data do pagamento', tipo: 'date', obrigatorio: true, largura: 'meia', padrao: hoje() },
+    { nome: 'valor', rotulo: 'Valor pago', tipo: 'moeda', obrigatorio: true, largura: 'meia',
+      ajuda: saldoAtual != null && !pg ? `Saldo a pagar hoje: ${moeda(saldoAtual)}` : '' },
+    { nome: 'forma', rotulo: 'Forma', tipo: 'select', opcoes: ['PIX', 'Transferência', 'Boleto', 'Dinheiro', 'Cheque'].map(o => [o, o]), largura: 'meia' },
+    { nome: 'obs', rotulo: 'Observação', largura: 'meia', placeholder: 'Ex.: adiantamento estrutural Residência Costa' },
+    { nome: 'comprovante', rotulo: 'Comprovante (opcional)', tipo: 'arquivo', aceita: '.pdf,image/*' },
+  ];
+  const m = formModal({
+    titulo: pg ? 'Editar pagamento ao parceiro' : 'Lançar pagamento ao parceiro', campos,
+    valores: pg || { parceiro_id: pid },
+    extraRodape: pg ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
+    onSalvar: async d => {
+      const arq = d.comprovante; delete d.comprovante;
+      if (!(Number(d.valor) > 0)) throw new Error('Informe o valor pago');
+      let reg;
+      if (pg) reg = await atualizar('pagamentos_parceiros', pg.id, d);
+      else [reg] = await inserir('pagamentos_parceiros', d);
+      if (arq) await anexar(arq, 'pagamento_parceiro', reg.id, 'Comprovante');
+      const conta = contaParceiro(d.parceiro_id);
+      aviso(`Pagamento lançado. Saldo com ${nomeParceiro(d.parceiro_id)}: ${conta.credito ? `crédito de ${moeda(conta.credito)}` : moeda(conta.saldo)}`);
+      nav.recarregar();
+    },
+  });
+  m.el.querySelector('[data-excluir]')?.addEventListener('click', async () => {
+    if (!await confirmar('Excluir este pagamento? O valor volta para o saldo a pagar.', { ok: 'Excluir', perigo: true })) return;
+    await tentar(() => remover('pagamentos_parceiros', pg.id), 'Pagamento excluído');
+    m.fechar(); nav.recarregar();
+  });
+}
+
+/** Tabela de pagamentos lançados (extrato). */
+export function extratoPagamentos(lista, { mostrarParceiro = false } = {}) {
+  if (!lista.length) return '<div class="vazio">Nenhum pagamento lançado.</div>';
+  return `<div class="tabela-envolve"><table class="tabela"><thead><tr><th>Data</th>${mostrarParceiro ? '<th>Parceiro</th>' : ''}<th>Forma</th><th>Observação</th><th class="num">Valor</th><th></th></tr></thead><tbody>
+    ${lista.map(p => {
+      const comp = store.anexos.find(a => a.ref_tipo === 'pagamento_parceiro' && a.ref_id === p.id);
+      return `<tr><td>${data(p.data)}</td>${mostrarParceiro ? `<td>${h(nomeParceiro(p.parceiro_id))}</td>` : ''}
+        <td>${h(p.forma || '')}</td><td class="fraco">${h(p.obs || '')}</td><td class="num">${moeda(p.valor)}</td>
+        <td class="num">${comp ? `<button class="btn-icone" data-abrir-anexo="${h(comp.path)}" title="Ver comprovante">${icone('anexo', 15)}</button>` : ''}
+          <button class="btn-icone" data-ed-pagparc="${p.id}" title="Editar">${icone('editar', 15)}</button></td></tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+export function ligarExtrato(raiz) {
+  raiz.querySelectorAll('[data-ed-pagparc]').forEach(b => b.addEventListener('click', () => formPagamentoParceiro(porId('pagamentos_parceiros', b.dataset.edPagparc))));
+  raiz.querySelectorAll('[data-abrir-anexo]').forEach(b => b.addEventListener('click', () => abrirArquivo(b.dataset.abrirAnexo)));
 }
 
 // ---------------------------------------------------------------- complementares contratados
@@ -272,7 +332,7 @@ export async function registrarComplementares(projetoId, disciplinas) {
   const ja = store.complementares.filter(c => c.projeto_id === projetoId).map(c => c.disciplina);
   const novas = disciplinas.filter(d => !ja.includes(d));
   const prazo = prazoSugeridoComplementar(projetoId);
-  if (novas.length) await inserir('complementares', novas.map(d => ({ projeto_id: projetoId, disciplina: d, status: 'a_enviar', prazo, valor: 0, pago: false })));
+  if (novas.length) await inserir('complementares', novas.map(d => ({ projeto_id: projetoId, disciplina: d, status: 'a_enviar', prazo, valor: 0 })));
   return novas.length;
 }
 

@@ -152,6 +152,18 @@ create table if not exists complementares (
   criado_em timestamptz default now()
 );
 
+-- ---------- PAGAMENTOS AOS PARCEIROS (lançados por data, abatem o saldo) ----------
+create table if not exists pagamentos_parceiros (
+  id uuid primary key default gen_random_uuid(),
+  parceiro_id uuid references parceiros(id) on delete cascade,
+  data date not null default current_date,
+  valor numeric not null default 0,
+  forma text,
+  obs text,
+  criado_em timestamptz default now()
+);
+create index if not exists idx_pagparc_parceiro on pagamentos_parceiros(parceiro_id);
+
 -- ---------- TAREFAS DA EQUIPE ----------
 create table if not exists tarefas (
   id uuid primary key default gen_random_uuid(),
@@ -194,7 +206,7 @@ alter default privileges in schema public
 do $$
 declare t text;
 begin
-  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','tarefas','anexos']
+  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','tarefas','anexos']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "equipe_total" on %I', t);

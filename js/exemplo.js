@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221330';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221330';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221330';
-import { hoje, somarDias } from './util.js?v=202611221330';
+import { store, inserir, atualizar } from './dados.js?v=202611221343';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221343';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221343';
+import { hoje, somarDias } from './util.js?v=202611221343';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -71,7 +71,14 @@ export async function criarDadosExemplo() {
     { projeto_id: p1.id, parceiro_id: fernanda.id, disciplina: 'Projeto elétrico de baixa tensão', status: 'a_enviar', prazo: d(28), valor: 3800, informacoes: 'Aguardar layout de interiores. Prever carregador de carro elétrico e automação.' },
     { projeto_id: p3.id, parceiro_id: marcos.id, disciplina: 'Projeto hidrossanitário e drenagem', status: 'revisao', enviado_em: d(-40), prazo: d(-2), valor: 7200,
       informacoes: 'Ampliação do vestiário (NR-24) e nova caixa de gordura do refeitório.' },
-    { projeto_id: p3.id, parceiro_id: carlos.id, disciplina: 'Projeto estrutural', status: 'entregue', enviado_em: d(-60), prazo: d(-20), entregue_em: d(-22), valor: 14000, pago: true, pago_em: d(-15) },
+    { projeto_id: p3.id, parceiro_id: carlos.id, disciplina: 'Projeto estrutural', status: 'entregue', enviado_em: d(-60), prazo: d(-20), entregue_em: d(-22), valor: 14000 },
+  ]);
+
+  await inserir('pagamentos_parceiros', [
+    { parceiro_id: carlos.id, data: d(-50), valor: 7000, forma: 'PIX', obs: 'Sinal — estrutural galpão' },
+    { parceiro_id: carlos.id, data: d(-15), valor: 7000, forma: 'PIX', obs: 'Saldo estrutural galpão' },
+    { parceiro_id: carlos.id, data: d(-3), valor: 2000, forma: 'PIX', obs: 'Adiantamento Residência Costa' },
+    { parceiro_id: marcos.id, data: d(-30), valor: 3000, forma: 'Transferência' },
   ]);
 
   await inserir('tarefas', [

@@ -2,20 +2,20 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221330';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221330';
-import { nav } from '../nav.js?v=202611221330';
-import { EQUIPE } from '../config.js?v=202611221330';
-import { CATEGORIAS } from '../modelos.js?v=202611221330';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221343';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221343';
+import { nav } from '../nav.js?v=202611221343';
+import { EQUIPE } from '../config.js?v=202611221343';
+import { CATEGORIAS } from '../modelos.js?v=202611221343';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento,
-} from '../negocio.js?v=202611221330';
+} from '../negocio.js?v=202611221343';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
   ligarLinhasComplementares, formComplementaresContratados, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221330';
-import { STATUS_PROJ } from './projetos.js?v=202611221330';
+} from '../componentes.js?v=202611221343';
+import { STATUS_PROJ } from './projetos.js?v=202611221343';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };

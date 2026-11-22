@@ -2,11 +2,11 @@
 //  FINANCEIRO — a receber (programados por data ou por fase),
 //  a pagar aos parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221330';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221330';
-import { nav } from '../nav.js?v=202611221330';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro } from '../negocio.js?v=202611221330';
-import { tagRecebimento, marcarRecebido, formRecebimento, formComplementar } from '../componentes.js?v=202611221330';
+import { store, porId, atualizar } from '../dados.js?v=202611221343';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221343';
+import { nav } from '../nav.js?v=202611221343';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro } from '../negocio.js?v=202611221343';
+import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato } from '../componentes.js?v=202611221343';
 
 let aba = 'receber';
 let ano = Number(hoje().slice(0, 4));
@@ -22,7 +22,8 @@ export function render(el) {
   const abertos = recs.filter(r => r.status !== 'pago');
   const cobrar = abertos.filter(r => ['liberado', 'atrasado'].includes(situacaoRecebimento(r).cod));
   const recebidosAno = recs.filter(r => r.status === 'pago' && String(r.pago_em || '').startsWith(String(ano)));
-  const aPagar = store.complementares.filter(c => !c.pago && Number(c.valor));
+  const contas = store.parceiros.map(p => ({ p, conta: contaParceiro(p.id) }));
+  const aPagar = contas.filter(x => x.conta.saldo > 0.009);
 
   el.innerHTML = `
     <div class="cab"><div class="titulos"><h1>Financeiro</h1><div class="sub">Pagamentos programados por data certa ou pela entrega de fases do projeto.</div></div></div>
@@ -30,10 +31,10 @@ export function render(el) {
       <div class="indicador ${cobrar.length ? 'alerta' : ''}"><div class="rot">Para cobrar agora</div><div class="val">${moeda(soma(cobrar))}</div><div class="det">fases entregues ou datas vencidas</div></div>
       <div class="indicador"><div class="rot">A receber (total)</div><div class="val">${moeda(soma(abertos))}</div><div class="det">${abertos.length} parcelas</div></div>
       <div class="indicador destaque"><div class="rot">Recebido em ${ano}</div><div class="val">${moeda(soma(recebidosAno))}</div></div>
-      <div class="indicador"><div class="rot">A pagar a parceiros</div><div class="val">${moeda(soma(aPagar))}</div><div class="det">${aPagar.length} complementares</div></div>
+      <div class="indicador"><div class="rot">A pagar a parceiros</div><div class="val">${moeda(aPagar.reduce((s, x) => s + x.conta.saldo, 0))}</div><div class="det">${aPagar.length} parceiro${aPagar.length === 1 ? '' : 's'} com saldo</div></div>
     </div>
     <div class="abas">
-      ${[['receber', 'A receber', abertos.length], ['recebidos', 'Recebidos'], ['pagar', 'A pagar (parceiros)', aPagar.length], ['ano', 'Visão do ano']]
+      ${[['receber', 'A receber', abertos.length], ['recebidos', 'Recebidos'], ['pagar', 'Parceiros', aPagar.length], ['ano', 'Visão do ano']]
         .map(([k, n, c]) => `<button data-aba="${k}" class="${aba === k ? 'ativo' : ''}">${n}${c ? ` <span class="contagem">${c}</span>` : ''}</button>`).join('')}
     </div>
     <div id="fin-area"></div>`;
@@ -90,21 +91,22 @@ function tabRecebidos(area, recs) {
 }
 
 function tabPagar(area, aPagar) {
-  area.innerHTML = `<div class="cartao">${aPagar.length ? `<div class="tabela-envolve"><table class="tabela">
-    <thead><tr><th>Parceiro</th><th>Disciplina / projeto</th><th>Entrega</th><th class="num">Valor</th><th></th></tr></thead>
-    <tbody>${aPagar.map(c => `<tr>
-      <td>${h(nomeParceiro(c.parceiro_id))}</td>
-      <td><div>${h(c.disciplina)}</div><div class="fraco">${h(porId('projetos', c.projeto_id)?.nome || '')}</div></td>
-      <td>${c.status === 'entregue' ? `<span class="tag tag-ok">Entregue ${data(c.entregue_em)}</span>` : `<span class="tag tag-neutro">Prazo ${data(c.prazo)}</span>`}</td>
-      <td class="num">${moeda(c.valor)}</td>
-      <td class="num"><button class="btn btn-peq" data-pagar="${c.id}">${icone('check', 14)} Pago</button>
-        <button class="btn-icone" data-ed-compl="${c.id}">${icone('editar', 15)}</button></td></tr>`).join('')}</tbody>
-    <tfoot><tr><td colspan="3">Total a pagar</td><td class="num">${moeda(soma(aPagar))}</td><td></td></tr></tfoot></table></div>` : '<div class="vazio">Nenhum valor a pagar aos parceiros.</div>'}</div>`;
-  area.querySelectorAll('[data-pagar]').forEach(b => b.addEventListener('click', async () => {
-    await tentar(() => atualizar('complementares', b.dataset.pagar, { pago: true, pago_em: hoje() }));
-    aviso('Pagamento ao parceiro registrado'); nav.recarregar();
-  }));
-  area.querySelectorAll('[data-ed-compl]').forEach(b => b.addEventListener('click', () => formComplementar(porId('complementares', b.dataset.edCompl))));
+  const extrato = [...store.pagamentos_parceiros].sort((a, b) => String(b.data).localeCompare(String(a.data))).slice(0, 30);
+  area.innerHTML = `<div class="cartao" style="margin-bottom:16px">
+    <div class="cartao-cab"><h2>Saldo com cada parceiro</h2><button class="btn btn-peq btn-primario" id="lancar-pag">${icone('mais', 14)} Lançar pagamento</button></div>
+    ${aPagar.length ? `<div class="tabela-envolve"><table class="tabela">
+    <thead><tr><th>Parceiro</th><th class="num">Cobrado</th><th class="num">Pago</th><th class="num">Saldo a pagar</th><th></th></tr></thead>
+    <tbody>${aPagar.map(({ p, conta }) => `<tr>
+      <td><a href="#/parceiro/${p.id}">${h(p.nome)}</a><div class="fraco">${h(p.especialidade || '')}${p.pix ? ' · PIX: ' + h(p.pix) : ''}</div></td>
+      <td class="num">${moeda(conta.total)}</td><td class="num">${moeda(conta.pago)}</td>
+      <td class="num" style="color:var(--terracota)">${moeda(conta.saldo)}</td>
+      <td class="num"><button class="btn btn-peq" data-pagar-parc="${p.id}">${icone('mais', 13)} Pagamento</button></td></tr>`).join('')}</tbody>
+    <tfoot><tr><td>Total</td><td></td><td></td><td class="num">${moeda(aPagar.reduce((s, x) => s + x.conta.saldo, 0))}</td><td></td></tr></tfoot></table></div>`
+    : '<div class="vazio">Nenhum saldo a pagar aos parceiros.</div>'}</div>
+    <div class="cartao"><div class="cartao-cab"><h2>Últimos pagamentos aos parceiros</h2></div>${extratoPagamentos(extrato, { mostrarParceiro: true })}</div>`;
+  area.querySelector('#lancar-pag').addEventListener('click', () => formPagamentoParceiro());
+  area.querySelectorAll('[data-pagar-parc]').forEach(b => b.addEventListener('click', () => formPagamentoParceiro(null, b.dataset.pagarParc)));
+  ligarExtrato(area);
 }
 
 function tabAno(area, recs) {
@@ -112,7 +114,7 @@ function tabAno(area, recs) {
     const chave = `${ano}-${String(i + 1).padStart(2, '0')}`;
     const recebido = soma(recs.filter(r => r.status === 'pago' && String(r.pago_em || '').startsWith(chave)));
     const previsto = soma(recs.filter(r => r.status !== 'pago' && String(dataReferencia(r) || '').startsWith(chave)));
-    const pagar = soma(store.complementares.filter(c => String((c.pago ? c.pago_em : c.prazo) || '').startsWith(chave)));
+    const pagar = soma(store.pagamentos_parceiros.filter(p => String(p.data || '').startsWith(chave)));
     return { m, recebido, previsto, pagar };
   });
   const max = Math.max(1, ...meses.map(x => x.recebido + x.previsto));
@@ -137,7 +139,7 @@ function tabAno(area, recs) {
       </div>
     </div>
     <div class="cartao tabela-envolve"><table class="tabela">
-      <thead><tr><th>Mês</th><th class="num">Recebido</th><th class="num">A receber</th><th class="num">Parceiros</th></tr></thead>
+      <thead><tr><th>Mês</th><th class="num">Recebido</th><th class="num">A receber</th><th class="num">Pago a parceiros</th></tr></thead>
       <tbody>${meses.map(x => `<tr><td>${x.m}</td><td class="num">${moeda(x.recebido)}</td><td class="num">${moeda(x.previsto)}</td><td class="num">${moeda(x.pagar)}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td>Total</td><td class="num">${moeda(meses.reduce((s, x) => s + x.recebido, 0))}</td><td class="num">${moeda(meses.reduce((s, x) => s + x.previsto, 0))}</td><td class="num">${moeda(meses.reduce((s, x) => s + x.pagar, 0))}</td></tr></tfoot>
     </table></div>`;

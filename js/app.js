@@ -1,20 +1,20 @@
 // =====================================================================
 //  Aplicativo: login, menu lateral e rotas
 // =====================================================================
-import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store } from './dados.js?v=202611221330';
-import { icone, h, aviso, diasAte } from './util.js?v=202611221330';
-import { nav } from './nav.js?v=202611221330';
-import { situacaoRecebimento } from './negocio.js?v=202611221330';
-import { criarDadosExemplo } from './exemplo.js?v=202611221330';
+import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611221343';
+import { icone, h, aviso, diasAte } from './util.js?v=202611221343';
+import { nav } from './nav.js?v=202611221343';
+import { situacaoRecebimento } from './negocio.js?v=202611221343';
+import { criarDadosExemplo } from './exemplo.js?v=202611221343';
 
-import * as painel from './telas/painel.js?v=202611221330';
-import * as projetos from './telas/projetos.js?v=202611221330';
-import * as projeto from './telas/projeto.js?v=202611221330';
-import * as clientes from './telas/clientes.js?v=202611221330';
-import * as financeiro from './telas/financeiro.js?v=202611221330';
-import * as orcamentos from './telas/orcamentos.js?v=202611221330';
-import * as tarefas from './telas/tarefas.js?v=202611221330';
-import * as parceiros from './telas/parceiros.js?v=202611221330';
+import * as painel from './telas/painel.js?v=202611221343';
+import * as projetos from './telas/projetos.js?v=202611221343';
+import * as projeto from './telas/projeto.js?v=202611221343';
+import * as clientes from './telas/clientes.js?v=202611221343';
+import * as financeiro from './telas/financeiro.js?v=202611221343';
+import * as orcamentos from './telas/orcamentos.js?v=202611221343';
+import * as tarefas from './telas/tarefas.js?v=202611221343';
+import * as parceiros from './telas/parceiros.js?v=202611221343';
 
 const MENU = [
   ['painel', 'Painel', 'painel'],
@@ -96,6 +96,10 @@ function desenhar() {
   } catch (e) {
     console.error(e);
     conteudo.innerHTML = `<div class="cartao cartao-corpo">Não foi possível abrir esta tela: ${h(e.message)}</div>`;
+  }
+  if (tabelasFaltando.length) {
+    conteudo.insertAdjacentHTML('afterbegin', `<div class="cartao cartao-corpo" style="margin-bottom:16px;border-color:var(--terracota);background:var(--terracota-clara);color:var(--terracota)">
+      ${icone('alerta', 16)} O banco de dados precisa de uma atualização para esta versão do app (falta: ${h(tabelasFaltando.join(', '))}). Rode o SQL de atualização no Supabase.</div>`);
   }
   atualizarContadores();
 }
