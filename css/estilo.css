@@ -390,6 +390,17 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
 .resp-lista li:last-child { border-bottom: 0; }
 .resp-lista small { color: var(--texto-2); }
 
+.espera { background: var(--terracota-clara); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; color: var(--terracota); font-size: .9rem; }
+.espera > .ic, .espera-cab .ic { margin-top: 2px; }
+.espera.ok, .espera.vazia { display: flex; gap: 8px; }
+.espera.ok { background: var(--ok-claro); color: var(--ok); }
+.espera.vazia { background: #f1efe8; color: var(--texto-2); }
+.espera b { font-weight: 400; }
+.espera-cab { display: flex; gap: 8px; margin-bottom: 8px; }
+.espera .fraco { color: var(--texto-2); font-size: .82rem; }
+.espera .tabela { background: var(--papel); border-radius: 6px; }
+.espera .tabela td { padding: 8px 10px; }
+
 /* ---------------------------------------------------------------- modal */
 .modal-fundo { position: fixed; inset: 0; background: rgba(23, 31, 16, .45); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; z-index: 50; overflow-y: auto; animation: aparecer .15s ease-out; }
 .modal { background: var(--papel); border-radius: 14px; width: 100%; box-shadow: var(--sombra-forte); display: flex; flex-direction: column; max-height: 90vh; animation: subir .18s ease-out; }

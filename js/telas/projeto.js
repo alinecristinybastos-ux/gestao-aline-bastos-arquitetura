@@ -2,20 +2,20 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221343';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221343';
-import { nav } from '../nav.js?v=202611221343';
-import { EQUIPE } from '../config.js?v=202611221343';
-import { CATEGORIAS } from '../modelos.js?v=202611221343';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221347';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221347';
+import { nav } from '../nav.js?v=202611221347';
+import { EQUIPE } from '../config.js?v=202611221347';
+import { CATEGORIAS } from '../modelos.js?v=202611221347';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
-  recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento,
-} from '../negocio.js?v=202611221343';
+  recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento, esperaComplementares, nomeParceiro, complAtrasado, STATUS_COMPL,
+} from '../negocio.js?v=202611221347';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
   ligarLinhasComplementares, formComplementaresContratados, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221343';
-import { STATUS_PROJ } from './projetos.js?v=202611221343';
+} from '../componentes.js?v=202611221347';
+import { STATUS_PROJ } from './projetos.js?v=202611221347';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -95,6 +95,8 @@ function abaEtapas(area, p) {
           <div class="marca-et">${et.status === 'concluida' ? icone('check', 13) : ''}</div>
           <div><div class="nm">${i + 1}. ${h(et.nome)}</div>
             <div class="sb">${et.status === 'concluida' ? `concluída ${data(et.concluida_em)}` : et.status === 'na' ? 'não se aplica' : tagPrazo(et.prazo)}<span>${pg.feitos}/${pg.total}</span></div>
+            ${et.chave === 'compatibilizacao' && et.status !== 'concluida' && et.status !== 'na' && esperaComplementares(p.id).pendentes.length
+              ? `<div class="sb"><span class="tag tag-terracota">${icone('enviar', 11)} aguardando parceiros · ${esperaComplementares(p.id).recebidos}/${esperaComplementares(p.id).total} recebidos</span></div>` : ''}
             ${et.status !== 'na' ? `<div class="progresso"><span style="width:${et.status === 'concluida' ? 100 : pg.pct}%"></span></div>` : ''}</div>
         </div>`;
       }).join('')}
@@ -135,6 +137,7 @@ function detalheEtapa(e, etapas) {
         <span>${pg.feitos} de ${pg.total} itens concluídos</span>
       </div>
       ${e.entrega ? `<div class="entrega">${icone('check', 16)}<div><b style="font-weight:400">Entrega da etapa:</b> ${h(e.entrega)}</div></div>` : ''}
+      ${e.chave === 'compatibilizacao' ? caixaEspera(e) : ''}
       ${pagamentos.length ? `<div class="entrega" style="background:var(--terracota-clara);color:var(--terracota)">${icone('financeiro', 16)}<div>Ao concluir esta etapa libera: ${pagamentos.map(r => `${h(r.descricao)} (${moeda(r.valor)}) ${r.status === 'pago' ? '— recebido' : ''}`).join(' · ')}</div></div>` : ''}
       <div class="progresso grosso" style="margin-bottom:14px"><span style="width:${e.status === 'concluida' ? 100 : pg.pct}%"></span></div>
       <div class="legenda-status"><span><i></i>Pendente</span><span><i class="a"></i>Em andamento</span><span><i class="c"></i>Concluído</span><span><i class="n"></i>Não se aplica</span><span>· clique na caixa para concluir; no lápis para mais opções</span></div>
@@ -158,6 +161,23 @@ function detalheEtapa(e, etapas) {
            ${pendentes === 0 && itens.length ? '<span class="tag tag-ok">Todos os itens concluídos</span>' : ''}
            ${e.status !== 'na' ? `<button class="btn btn-primario" data-acao-etapa="concluir">${icone('check', 16)} Concluir etapa</button>` : ''}`}
     </div>
+  </div>`;
+}
+
+function caixaEspera(e) {
+  const esp = esperaComplementares(e.projeto_id);
+  if (!esp.total) return `<div class="espera vazia">${icone('enviar', 16)}<div>Nenhum complementar registrado para este projeto.
+    <a href="#/projeto/${e.projeto_id}/complementares">Marcar complementares contratados</a></div></div>`;
+  if (!esp.pendentes.length) return `<div class="espera ok">${icone('check', 16)}<div><b>Todos os ${esp.total} complementares foram recebidos.</b> Pode seguir com a compatibilização.</div></div>`;
+  const ultimo = esp.pendentes.map(c => c.prazo).filter(Boolean).sort().pop();
+  return `<div class="espera">
+    <div class="espera-cab">${icone('enviar', 16)}<div><b>Aguardando os parceiros</b> — ${esp.recebidos} de ${esp.total} complementares recebidos${ultimo ? ` · último prazo ${data(ultimo)}` : ''}.
+      <div class="fraco">Enquanto espera, o projeto fica nesta etapa. Marque cada um como recebido quando chegar.</div></div></div>
+    <table class="tabela"><tbody>${esp.pendentes.map(c => `<tr>
+      <td>${h(c.disciplina)}<div class="fraco">${h(nomeParceiro(c.parceiro_id))}</div></td>
+      <td><span class="tag ${complAtrasado(c) ? 'tag-atrasado' : 'tag-areia'}">${h(STATUS_COMPL[c.status] || c.status)}</span></td>
+      <td>${tagPrazo(c.prazo)}</td>
+      <td class="num"><button class="btn btn-peq" data-compl-recebido="${c.id}">${icone('check', 14)} Recebido</button></td></tr>`).join('')}</tbody></table>
   </div>`;
 }
 
@@ -205,6 +225,13 @@ function ligarEtapa(area, e, p) {
     const lista = itensDa(e.id).filter(i => (i.grupo || 'Itens') === b.dataset.grupoNa);
     const todosNa = lista.every(i => i.status === 'na');
     await tentar(async () => { for (const i of lista) await atualizar('itens', i.id, { status: todosNa ? 'pendente' : 'na' }); });
+    nav.recarregar();
+  }));
+  area.querySelectorAll('[data-compl-recebido]').forEach(b => b.addEventListener('click', async () => {
+    const c = porId('complementares', b.dataset.complRecebido);
+    await tentar(() => atualizar('complementares', c.id, { status: 'entregue', entregue_em: hoje() }));
+    const esp = esperaComplementares(p.id);
+    aviso(esp.pendentes.length ? `${c.disciplina} recebido. Faltam ${esp.pendentes.length}.` : 'Todos os complementares recebidos! Pode seguir com a compatibilização.');
     nav.recarregar();
   }));
   area.querySelector('#novo-grupo').addEventListener('click', () => formModal({

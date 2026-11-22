@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js?v=202611221343';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221343';
-import { nav } from '../nav.js?v=202611221343';
-import { ESCRITORIO } from '../config.js?v=202611221343';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro } from '../negocio.js?v=202611221343';
-import { tagPrazo, tagRecebimento, marcarRecebido } from '../componentes.js?v=202611221343';
-import { novoProjeto } from './projetos.js?v=202611221343';
+import { store, porId } from '../dados.js?v=202611221347';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221347';
+import { nav } from '../nav.js?v=202611221347';
+import { ESCRITORIO } from '../config.js?v=202611221347';
+import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros } from '../negocio.js?v=202611221347';
+import { tagPrazo, tagRecebimento, marcarRecebido } from '../componentes.js?v=202611221347';
+import { novoProjeto } from './projetos.js?v=202611221347';
 
 function saudacao() {
   const hr = new Date().getHours();
@@ -72,7 +72,7 @@ export function render(el) {
             .sort((a, b) => String(a.f?.prazo || '9').localeCompare(String(b.f?.prazo || '9')))
             .map(({ p, f, pr }) => `<div class="linha-proj" data-ir="projeto/${p.id}">
               <div style="min-width:0"><div class="nome">${h(p.nome)}</div>
-                <div class="det">${h(nomeCliente(p.cliente_id))} · <span style="color:var(--verde)">${h(f ? f.nome : 'Etapas concluídas')}</span></div></div>
+                <div class="det">${h(nomeCliente(p.cliente_id))} · <span style="color:var(--verde)">${h(f ? f.nome : 'Etapas concluídas')}</span>${aguardandoParceiros(p.id) ? ` · <span style="color:var(--terracota)">aguardando parceiros (${aguardandoParceiros(p.id).recebidos}/${aguardandoParceiros(p.id).total})</span>` : ''}</div></div>
               <div><div class="progresso"><span style="width:${pr.pct}%"></span></div><div class="pct">${pr.pct}% · etapa ${pr.etapasFeitas + 1 > pr.etapas ? pr.etapas : pr.etapasFeitas + 1} de ${pr.etapas}</div></div>
               <div class="col-prazo" style="text-align:right">${f ? tagPrazo(f.prazo) : ''}</div>
             </div>`).join('')

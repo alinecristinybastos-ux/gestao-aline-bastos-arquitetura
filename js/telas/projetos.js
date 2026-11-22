@@ -1,12 +1,12 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611221343';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221343';
-import { nav } from '../nav.js?v=202611221343';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO } from '../modelos.js?v=202611221343';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo } from '../negocio.js?v=202611221343';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares } from '../componentes.js?v=202611221343';
+import { store, atualizar } from '../dados.js?v=202611221347';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221347';
+import { nav } from '../nav.js?v=202611221347';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO } from '../modelos.js?v=202611221347';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros } from '../negocio.js?v=202611221347';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares } from '../componentes.js?v=202611221347';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };
@@ -21,6 +21,11 @@ export function prazoFinal(p) {
   return et.length ? et[et.length - 1].prazo : null;
 }
 
+export function esperaTag(pid) {
+  const esp = aguardandoParceiros(pid);
+  return esp ? `<div style="margin:-2px 0 8px"><span class="tag tag-terracota">aguardando parceiros · ${esp.recebidos}/${esp.total}</span></div>` : '';
+}
+
 export function cartaoProjeto(p) {
   const f = faseAtual(p.id);
   const pr = progressoProjeto(p.id);
@@ -29,6 +34,7 @@ export function cartaoProjeto(p) {
     <h4>${h(p.nome)}</h4>
     <div class="cli">${h(nomeCliente(p.cliente_id))}</div>
     <div class="fase">${f ? `${icone('seta', 13)} ${h(f.nome)}` : `${icone('check', 13)} Todas as etapas concluídas`}</div>
+    ${esperaTag(p.id)}
     <div class="progresso"><span style="width:${pr.pct}%"></span></div>
     <div class="rodape"><span class="tag tag-verde">${h(TIPOS[p.categoria]?.[p.tipo] || CATEGORIAS[p.categoria])}</span>
       ${f ? tagPrazo(f.prazo) : `<span class="fraco">${pr.pct}%</span>`}</div>
@@ -63,7 +69,7 @@ function listaHTML(lista) {
       return `<tr class="clicavel" data-proj="${p.id}">
         <td><div>${h(p.nome)}</div><div class="fraco">${h(p.codigo || '')} · ${h(descricaoTipo(p))}</div></td>
         <td>${h(nomeCliente(p.cliente_id))}</td>
-        <td>${f ? h(f.nome) : '<span class="fraco">Concluído</span>'}</td>
+        <td>${f ? h(f.nome) : '<span class="fraco">Concluído</span>'}${esperaTag(p.id)}</td>
         <td><div class="progresso"><span style="width:${pr.pct}%"></span></div><div class="fraco">${pr.pct}% · ${pr.etapasFeitas}/${pr.etapas} etapas</div></td>
         <td>${tagPrazo(prazoFinal(p), p.status === 'concluido')}</td>
         <td><span class="tag ${p.status === 'ativo' ? 'tag-verde' : p.status === 'concluido' ? 'tag-ok' : 'tag-neutro'}">${STATUS_PROJ[p.status] || p.status}</span></td>

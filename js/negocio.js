@@ -2,9 +2,9 @@
 //  Regras do escritório: criação de projeto, fases, progresso,
 //  situação dos recebimentos e dos complementares.
 // =====================================================================
-import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221343';
-import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221343';
-import { hoje, diasAte } from './util.js?v=202611221343';
+import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221347';
+import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221347';
+import { hoje, diasAte } from './util.js?v=202611221347';
 
 export const nomeCliente = (id) => porId('clientes', id)?.nome || 'Sem cliente';
 export const nomeParceiro = (id) => porId('parceiros', id)?.nome || 'A definir';
@@ -100,6 +100,20 @@ export function pagamentoCompl(c) {
   const pago = contaParceiro(c.parceiro_id).quitacao[c.id] || 0;
   const falta = +(Number(c.valor) - pago).toFixed(2);
   return { cod: falta <= 0.009 ? 'pago' : pago > 0 ? 'parcial' : 'apagar', pago, falta };
+}
+
+/** Complementares do projeto ainda não entregues pelos parceiros. */
+export function esperaComplementares(pid) {
+  const todos = store.complementares.filter(c => c.projeto_id === pid);
+  const pendentes = todos.filter(c => c.status !== 'entregue');
+  return { total: todos.length, recebidos: todos.length - pendentes.length, pendentes };
+}
+/** O projeto está parado na compatibilização esperando os parceiros? */
+export function aguardandoParceiros(pid) {
+  const f = faseAtual(pid);
+  if (!f || f.chave !== 'compatibilizacao') return null;
+  const esp = esperaComplementares(pid);
+  return esp.pendentes.length ? esp : null;
 }
 
 export function complAtrasado(c) { return c.status !== 'entregue' && c.prazo && diasAte(c.prazo) < 0; }
