@@ -164,6 +164,24 @@ create table if not exists pagamentos_parceiros (
 );
 create index if not exists idx_pagparc_parceiro on pagamentos_parceiros(parceiro_id);
 
+-- ---------- PENDÊNCIAS DO CLIENTE (projeto aguardando decisão/ação do cliente) ----------
+create table if not exists pendencias (
+  id uuid primary key default gen_random_uuid(),
+  projeto_id uuid references projetos(id) on delete cascade,
+  etapa_id uuid references etapas(id) on delete set null,
+  tipo text,                 -- aprovacao | pagamento | acabamento | informacao | outro
+  descricao text not null,
+  solicitado_em date default current_date,
+  prazo date,                -- até quando cobrar o cliente
+  status text default 'aberta', -- aberta | resolvida
+  resolvido_em date,
+  cobrancas int default 0,   -- quantas vezes foi cobrado
+  ultima_cobranca date,
+  obs text,
+  criado_em timestamptz default now()
+);
+create index if not exists idx_pend_projeto on pendencias(projeto_id);
+
 -- ---------- TAREFAS DA EQUIPE ----------
 create table if not exists tarefas (
   id uuid primary key default gen_random_uuid(),
@@ -206,7 +224,7 @@ alter default privileges in schema public
 do $$
 declare t text;
 begin
-  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','tarefas','anexos']
+  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','pendencias','tarefas','anexos']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "equipe_total" on %I', t);

@@ -2,20 +2,20 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221347';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221347';
-import { nav } from '../nav.js?v=202611221347';
-import { EQUIPE } from '../config.js?v=202611221347';
-import { CATEGORIAS } from '../modelos.js?v=202611221347';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221357';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221357';
+import { nav } from '../nav.js?v=202611221357';
+import { EQUIPE } from '../config.js?v=202611221357';
+import { CATEGORIAS } from '../modelos.js?v=202611221357';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
-  recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento, esperaComplementares, nomeParceiro, complAtrasado, STATUS_COMPL,
-} from '../negocio.js?v=202611221347';
+  recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento, esperaComplementares, nomeParceiro, complAtrasado, STATUS_COMPL, pendenciasAbertas,
+} from '../negocio.js?v=202611221357';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
-  ligarLinhasComplementares, formComplementaresContratados, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221347';
-import { STATUS_PROJ } from './projetos.js?v=202611221347';
+  ligarLinhasComplementares, formComplementaresContratados, formPendencia, linhaPendencia, ligarPendencias, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
+} from '../componentes.js?v=202611221357';
+import { STATUS_PROJ } from './projetos.js?v=202611221357';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -53,8 +53,13 @@ export function render(el, [id, aba]) {
           ${p.contrato_path ? `<span class="tag tag-ok">${icone('check', 12)} Contrato anexado</span>` : `<span class="tag tag-alerta">Contrato não anexado</span>`}
         </div>
       </div>
-      <div class="anel" style="--p:${pr.pct}"><div><div><b>${pr.pct}%</b><br><small>${pr.etapasFeitas}/${pr.etapas} etapas</small></div></div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div class="anel" style="--p:${pr.pct}"><div><div><b>${pr.pct}%</b><br><small>${pr.etapasFeitas}/${pr.etapas} etapas</small></div></div></div>
+        <button class="btn btn-peq btn-terracota" id="nova-pend" title="Registrar que o projeto está esperando uma decisão ou ação do cliente">${icone('alerta', 14)} Aguardando cliente</button>
+      </div>
     </div>
+    ${pendenciasAbertas(id).length ? `<div class="alerta-cliente"><div class="cab-alerta">${icone('alerta', 16)} Aguardando o cliente (${pendenciasAbertas(id).length})</div>
+      ${pendenciasAbertas(id).map(x => linhaPendencia(x)).join('')}</div>` : ''}
 
     <div class="trilha">${etapas.map((e, i) => {
       const cls = e.status === 'concluida' ? 'feito' : e.status === 'na' ? 'na' : e.id === faseAtual(id)?.id ? 'atual' : '';
@@ -76,6 +81,8 @@ export function render(el, [id, aba]) {
 
   el.querySelectorAll('[data-aba]').forEach(b => b.addEventListener('click', () => { estado.aba = b.dataset.aba; render(el, [id]); }));
   el.querySelectorAll('[data-ir-etapa]').forEach(b => b.addEventListener('click', () => { estado.etapa = b.dataset.irEtapa; estado.aba = 'etapas'; render(el, [id]); }));
+  el.querySelector('#nova-pend').addEventListener('click', () => formPendencia(null, { projeto_id: id, etapa_id: estado.etapa }));
+  ligarPendencias(el);
   el.querySelector('#status-proj').addEventListener('change', async e => {
     await tentar(() => atualizar('projetos', id, { status: e.target.value }), 'Situação atualizada'); nav.recarregar();
   });
@@ -95,6 +102,7 @@ function abaEtapas(area, p) {
           <div class="marca-et">${et.status === 'concluida' ? icone('check', 13) : ''}</div>
           <div><div class="nm">${i + 1}. ${h(et.nome)}</div>
             <div class="sb">${et.status === 'concluida' ? `concluída ${data(et.concluida_em)}` : et.status === 'na' ? 'não se aplica' : tagPrazo(et.prazo)}<span>${pg.feitos}/${pg.total}</span></div>
+            ${pendenciasAbertas(p.id).some(x => x.etapa_id === et.id) ? `<div class="sb"><span class="tag tag-terracota">${icone('alerta', 11)} aguardando cliente</span></div>` : ''}
             ${et.chave === 'compatibilizacao' && et.status !== 'concluida' && et.status !== 'na' && esperaComplementares(p.id).pendentes.length
               ? `<div class="sb"><span class="tag tag-terracota">${icone('enviar', 11)} aguardando parceiros · ${esperaComplementares(p.id).recebidos}/${esperaComplementares(p.id).total} recebidos</span></div>` : ''}
             ${et.status !== 'na' ? `<div class="progresso"><span style="width:${et.status === 'concluida' ? 100 : pg.pct}%"></span></div>` : ''}</div>
@@ -124,6 +132,7 @@ function detalheEtapa(e, etapas) {
     <div class="cartao-cab">
       <h2>${idx + 1}. ${h(e.nome)}</h2>
       <span class="tag ${e.status === 'concluida' ? 'tag-ok' : e.status === 'andamento' ? 'tag-terracota' : 'tag-neutro'}">${ST_ETAPA[e.status]}</span>
+      <button class="btn btn-peq btn-leve" data-acao-etapa="pendencia" title="Etapa parada esperando o cliente">${icone('alerta', 14)} Aguardando cliente</button>
       <button class="btn-icone" data-acao-etapa="editar" title="Editar etapa">${icone('editar', 16)}</button>
       <button class="btn-icone" data-acao-etapa="subir" title="Mover para cima" ${idx === 0 ? 'disabled' : ''}>${icone('cima', 16)}</button>
       <button class="btn-icone" data-acao-etapa="descer" title="Mover para baixo" ${idx === etapas.length - 1 ? 'disabled' : ''}>${icone('baixo', 16)}</button>
@@ -252,6 +261,7 @@ function ligarEtapa(area, e, p) {
     const acao = b.dataset.acaoEtapa;
     const etapas = etapasDo(p.id); const idx = etapas.findIndex(x => x.id === e.id);
     if (acao === 'editar') return formEtapa(e, p);
+    if (acao === 'pendencia') return formPendencia(null, { projeto_id: p.id, etapa_id: e.id });
     if (acao === 'excluir') {
       if (!await confirmar(`Excluir a etapa "${e.nome}" e todos os seus itens?`, { ok: 'Excluir', perigo: true })) return;
       await tentar(() => remover('etapas', e.id), 'Etapa excluída'); estado.etapa = null; return nav.recarregar();

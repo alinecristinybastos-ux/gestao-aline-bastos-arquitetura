@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221347';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje } from './util.js?v=202611221347';
-import { EQUIPE } from './config.js?v=202611221347';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS } from './modelos.js?v=202611221347';
-import { nav } from './nav.js?v=202611221347';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl } from './negocio.js?v=202611221347';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221357';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221357';
+import { EQUIPE } from './config.js?v=202611221357';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS } from './modelos.js?v=202611221357';
+import { nav } from './nav.js?v=202611221357';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221357';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -317,6 +317,79 @@ export function extratoPagamentos(lista, { mostrarParceiro = false } = {}) {
 export function ligarExtrato(raiz) {
   raiz.querySelectorAll('[data-ed-pagparc]').forEach(b => b.addEventListener('click', () => formPagamentoParceiro(porId('pagamentos_parceiros', b.dataset.edPagparc))));
   raiz.querySelectorAll('[data-abrir-anexo]').forEach(b => b.addEventListener('click', () => abrirArquivo(b.dataset.abrirAnexo)));
+}
+
+// ---------------------------------------------------------------- pendências do cliente
+export function formPendencia(pend = null, padrao = {}) {
+  const pid = pend?.projeto_id || padrao.projeto_id;
+  const etapas = etapasDo(pid);
+  const campos = [
+    { nome: 'tipo', rotulo: 'O que o cliente precisa fazer', tipo: 'select', vazio: false, opcoes: Object.entries(TIPOS_PENDENCIA), largura: 'meia' },
+    { nome: 'etapa_id', rotulo: 'Fase do projeto', tipo: 'select', opcoes: etapas.map(e => [e.id, e.nome]), vazio: 'Geral', largura: 'meia' },
+    { nome: 'descricao', rotulo: 'Descrição', obrigatorio: true, placeholder: 'Ex.: Aprovar o layout da cozinha; escolher o porcelanato da sala…' },
+    { nome: 'solicitado_em', rotulo: 'Pedido ao cliente em', tipo: 'date', largura: 'meia', padrao: hoje() },
+    { nome: 'prazo', rotulo: 'Cobrar até', tipo: 'date', obrigatorio: true, largura: 'meia', ajuda: 'Data em que você vai cobrar o cliente' },
+    { nome: 'obs', rotulo: 'Observações', tipo: 'textarea', linhas: 2 },
+  ];
+  const m = formModal({
+    titulo: pend ? 'Pendência do cliente' : 'Projeto aguardando o cliente', campos,
+    valores: pend || { tipo: 'aprovacao', etapa_id: faseAtual(pid)?.id, prazo: somarDias(hoje(), 3), ...padrao },
+    extraRodape: pend ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
+    onSalvar: async d => {
+      if (pend) await atualizar('pendencias', pend.id, d);
+      else await inserir('pendencias', { ...d, projeto_id: pid, status: 'aberta', cobrancas: 0 });
+      aviso(pend ? 'Pendência atualizada' : 'Alerta criado: aguardando o cliente'); nav.recarregar();
+    },
+  });
+  m.el.querySelector('[data-excluir]')?.addEventListener('click', async () => {
+    if (!await confirmar('Excluir esta pendência?', { ok: 'Excluir', perigo: true })) return;
+    await tentar(() => remover('pendencias', pend.id), 'Pendência excluída'); m.fechar(); nav.recarregar();
+  });
+}
+
+/** Link de WhatsApp com a mensagem de cobrança já escrita. */
+export function linkCobranca(pend) {
+  const p = porId('projetos', pend.projeto_id);
+  const c = porId('clientes', p?.cliente_id);
+  const resp = Array.isArray(c?.responsaveis) ? c.responsaveis.find(r => r?.telefone) : null;
+  const fone = String(resp?.telefone || c?.telefone || '').replace(/\D/g, '');
+  if (!fone) return null;
+  const nome = (resp?.nome || c?.nome || '').trim().split(/\s+/)[0];
+  const txt = `Olá, ${nome}! Tudo bem? Passando para lembrar sobre o projeto ${p?.nome || ''}: ${pend.descricao}. `
+    + `Assim que tiver um retorno, seguimos com a próxima etapa. Obrigada! — Aline Bastos Arquitetura`;
+  return `https://wa.me/${fone.length <= 11 ? '55' + fone : fone}?text=${encodeURIComponent(txt)}`;
+}
+
+export function linhaPendencia(x, { mostrarProjeto = false } = {}) {
+  const pz = prazoTexto(x.prazo);
+  const zap = linkCobranca(x);
+  const dias = x.solicitado_em ? -Math.min(0, Math.round((new Date(x.solicitado_em + 'T12:00') - new Date(hoje() + 'T12:00')) / 86400000)) : null;
+  const et = porId('etapas', x.etapa_id);
+  return `<div class="pend ${pz.cls}">
+    <div class="pend-txt"><div><span class="tag tag-${pz.cls === 'atrasado' ? 'atrasado' : 'terracota'}">${pz.cls === 'atrasado' ? 'cobrar! ' : 'cobrar '}${h(pz.txt)}</span>
+      ${h(x.descricao)}</div>
+      <small>${[mostrarProjeto && porId('projetos', x.projeto_id)?.nome, TIPOS_PENDENCIA[x.tipo], et && et.nome, dias != null && (dias === 0 ? 'pedido hoje' : `aguardando há ${dias} dia${dias === 1 ? '' : 's'}`), x.cobrancas ? `cobrado ${x.cobrancas}x (último ${data(x.ultima_cobranca)})` : ''].filter(Boolean).map(h).join(' · ')}</small></div>
+    <div class="pend-acoes">
+      ${zap ? `<a class="btn btn-peq" target="_blank" rel="noopener" href="${h(zap)}" data-cobrar="${x.id}">WhatsApp</a>` : ''}
+      <button class="btn btn-peq btn-primario" data-resolver="${x.id}">${icone('check', 14)} Resolvido</button>
+      <button class="btn-icone" data-ed-pend="${x.id}" title="Editar">${icone('editar', 15)}</button>
+    </div></div>`;
+}
+
+export function ligarPendencias(raiz) {
+  raiz.querySelectorAll('[data-resolver]').forEach(b => b.addEventListener('click', async e => {
+    e.stopPropagation();
+    await tentar(() => atualizar('pendencias', b.dataset.resolver, { status: 'resolvida', resolvido_em: hoje() }), 'Pendência resolvida');
+    nav.recarregar();
+  }));
+  raiz.querySelectorAll('[data-ed-pend]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); formPendencia(porId('pendencias', b.dataset.edPend)); }));
+  raiz.querySelectorAll('[data-cobrar]').forEach(a => a.addEventListener('click', e => {
+    e.stopPropagation();
+    // registra a cobrança e sugere a próxima data (+3 dias)
+    const x = porId('pendencias', a.dataset.cobrar);
+    tentar(() => atualizar('pendencias', x.id, { cobrancas: (x.cobrancas || 0) + 1, ultima_cobranca: hoje(), prazo: somarDias(hoje(), 3) }))
+      .then(() => { aviso('Cobrança registrada. Próximo lembrete em 3 dias.'); nav.recarregar(); });
+  }));
 }
 
 // ---------------------------------------------------------------- complementares contratados

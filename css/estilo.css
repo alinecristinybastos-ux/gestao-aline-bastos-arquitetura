@@ -401,6 +401,16 @@ table.tabela { width: 100%; border-collapse: collapse; font-size: .93rem; }
 .espera .tabela { background: var(--papel); border-radius: 6px; }
 .espera .tabela td { padding: 8px 10px; }
 
+.pend { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(139, 65, 9, .15); }
+.pend:last-child { border-bottom: 0; }
+.pend-txt { flex: 1; min-width: 0; }
+.pend-txt > div { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pend-txt small { color: var(--texto-2); font-size: .8rem; }
+.pend-acoes { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.alerta-cliente { background: var(--terracota-clara); border: 1px solid rgba(139, 65, 9, .25); border-radius: var(--raio); margin-bottom: 18px; }
+.alerta-cliente .cab-alerta { display: flex; align-items: center; gap: 8px; padding: 10px 14px 4px; color: var(--terracota); }
+@media (max-width: 860px) { .pend { flex-direction: column; align-items: stretch; } .pend-acoes { justify-content: flex-end; } }
+
 /* ---------------------------------------------------------------- modal */
 .modal-fundo { position: fixed; inset: 0; background: rgba(23, 31, 16, .45); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; z-index: 50; overflow-y: auto; animation: aparecer .15s ease-out; }
 .modal { background: var(--papel); border-radius: 14px; width: 100%; box-shadow: var(--sombra-forte); display: flex; flex-direction: column; max-height: 90vh; animation: subir .18s ease-out; }

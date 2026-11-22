@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221347';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221347';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221347';
-import { hoje, somarDias } from './util.js?v=202611221347';
+import { store, inserir, atualizar } from './dados.js?v=202611221357';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221357';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221357';
+import { hoje, somarDias } from './util.js?v=202611221357';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -79,6 +79,11 @@ export async function criarDadosExemplo() {
     { parceiro_id: carlos.id, data: d(-15), valor: 7000, forma: 'PIX', obs: 'Saldo estrutural galpão' },
     { parceiro_id: carlos.id, data: d(-3), valor: 2000, forma: 'PIX', obs: 'Adiantamento Residência Costa' },
     { parceiro_id: marcos.id, data: d(-30), valor: 3000, forma: 'Transferência' },
+  ]);
+
+  await inserir('pendencias', [
+    { projeto_id: p2.id, etapa_id: etapasDo(p2.id).find(e => e.status === 'andamento')?.id, tipo: 'aprovacao', descricao: 'Aprovar o layout da recepção e dos consultórios', solicitado_em: d(-6), prazo: d(-1), status: 'aberta', cobrancas: 1, ultima_cobranca: d(-3) },
+    { projeto_id: p4.id, etapa_id: etapasDo(p4.id).find(e => e.status === 'andamento')?.id, tipo: 'acabamento', descricao: 'Escolher o porcelanato da sala e o granito da cozinha', solicitado_em: d(-2), prazo: d(2), status: 'aberta', cobrancas: 0 },
   ]);
 
   await inserir('tarefas', [

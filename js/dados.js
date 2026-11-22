@@ -4,10 +4,10 @@
 //  - Sem configuração: modo demonstração (localStorage deste navegador)
 //  Todas as tabelas ficam em memória em `store` para as telas lerem.
 // =====================================================================
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221347';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js?v=202611221357';
 
 export const TABELAS = ['clientes', 'projetos', 'etapas', 'itens', 'recebimentos',
-  'orcamentos', 'parceiros', 'complementares', 'pagamentos_parceiros', 'tarefas', 'anexos'];
+  'orcamentos', 'parceiros', 'complementares', 'pagamentos_parceiros', 'pendencias', 'tarefas', 'anexos'];
 
 export const store = Object.fromEntries(TABELAS.map(t => [t, []]));
 export const modoDemo = !SUPABASE_URL || !SUPABASE_ANON_KEY;
@@ -119,7 +119,7 @@ export async function remover(tabela, id) {
   store[tabela] = store[tabela].filter(r => r.id !== id);
   // remoções em cascata (espelha o banco)
   const cascata = {
-    projetos: [['etapas', 'projeto_id'], ['itens', 'projeto_id'], ['recebimentos', 'projeto_id'], ['complementares', 'projeto_id']],
+    projetos: [['etapas', 'projeto_id'], ['itens', 'projeto_id'], ['recebimentos', 'projeto_id'], ['complementares', 'projeto_id'], ['pendencias', 'projeto_id']],
     etapas: [['itens', 'etapa_id']],
   }[tabela] || [];
   cascata.forEach(([t, campo]) => { store[t] = store[t].filter(r => r[campo] !== id); });

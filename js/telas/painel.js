@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js?v=202611221347';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221347';
-import { nav } from '../nav.js?v=202611221347';
-import { ESCRITORIO } from '../config.js?v=202611221347';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros } from '../negocio.js?v=202611221347';
-import { tagPrazo, tagRecebimento, marcarRecebido } from '../componentes.js?v=202611221347';
-import { novoProjeto } from './projetos.js?v=202611221347';
+import { store, porId } from '../dados.js?v=202611221357';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221357';
+import { nav } from '../nav.js?v=202611221357';
+import { ESCRITORIO } from '../config.js?v=202611221357';
+import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221357';
+import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221357';
+import { novoProjeto } from './projetos.js?v=202611221357';
 
 function saudacao() {
   const hr = new Date().getHours();
@@ -26,6 +26,9 @@ function proximosPrazos() {
   });
   store.tarefas.filter(t => t.status !== 'feito' && t.prazo && diasAte(t.prazo) <= LIMITE).forEach(t => {
     lista.push({ data: t.prazo, tit: t.titulo, sub: `${t.responsavel || ''}${t.projeto_id ? ' · ' + (porId('projetos', t.projeto_id)?.nome || '') : ''}`, tipo: 'Tarefa', ir: 'tarefas' });
+  });
+  pendenciasAbertas().filter(x => x.prazo && diasAte(x.prazo) <= LIMITE).forEach(x => {
+    lista.push({ data: x.prazo, tit: `Cobrar cliente: ${x.descricao}`, sub: porId('projetos', x.projeto_id)?.nome || '', tipo: 'Cliente', ir: `projeto/${x.projeto_id}` });
   });
   store.recebimentos.filter(r => r.status !== 'pago' && r.gatilho === 'data' && r.vencimento && diasAte(r.vencimento) <= LIMITE).forEach(r => {
     lista.push({ data: r.vencimento, tit: `${r.descricao} · ${moeda(r.valor)}`, sub: porId('projetos', r.projeto_id)?.nome || '', tipo: 'Recebimento', ir: `projeto/${r.projeto_id}/financeiro` });
@@ -79,6 +82,9 @@ export function render(el) {
             : `<div class="vazio">Nenhum projeto em andamento.<br><button class="btn btn-primario" id="p-novo2">Cadastrar o primeiro projeto</button></div>`}
         </div>
 
+        ${pendenciasAbertas().length ? `<div class="alerta-cliente" style="margin-bottom:0"><div class="cab-alerta">${icone('alerta', 16)} Aguardando os clientes (${pendenciasAbertas().length})</div>
+          ${pendenciasAbertas().map(x => `<div data-ir="projeto/${x.projeto_id}" style="cursor:pointer">${linhaPendencia(x, { mostrarProjeto: true })}</div>`).join('')}</div>` : ''}
+
         <div class="cartao">
           <div class="cartao-cab"><h2>Pagamentos para cobrar</h2><a href="#/financeiro" class="btn btn-peq btn-leve">Financeiro ${icone('seta', 14)}</a></div>
           ${paraCobrar.length ? `<div class="tabela-envolve"><table class="tabela"><tbody>${paraCobrar.map(r => {
@@ -104,6 +110,7 @@ export function render(el) {
     </div>`;
 
   el.querySelectorAll('[data-ir]').forEach(d => d.addEventListener('click', () => nav.ir(d.dataset.ir)));
+  ligarPendencias(el);
   el.querySelector('#p-novo').addEventListener('click', () => novoProjeto());
   el.querySelector('#p-novo2')?.addEventListener('click', () => novoProjeto());
   el.querySelectorAll('[data-receber]').forEach(b => b.addEventListener('click', async () => {

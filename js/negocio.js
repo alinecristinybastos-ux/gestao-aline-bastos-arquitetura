@@ -2,9 +2,9 @@
 //  Regras do escritório: criação de projeto, fases, progresso,
 //  situação dos recebimentos e dos complementares.
 // =====================================================================
-import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221347';
-import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221347';
-import { hoje, diasAte } from './util.js?v=202611221347';
+import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221357';
+import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221357';
+import { hoje, diasAte } from './util.js?v=202611221357';
 
 export const nomeCliente = (id) => porId('clientes', id)?.nome || 'Sem cliente';
 export const nomeParceiro = (id) => porId('parceiros', id)?.nome || 'A definir';
@@ -101,6 +101,18 @@ export function pagamentoCompl(c) {
   const falta = +(Number(c.valor) - pago).toFixed(2);
   return { cod: falta <= 0.009 ? 'pago' : pago > 0 ? 'parcial' : 'apagar', pago, falta };
 }
+
+// ---------------------------------------------------------------- pendências do cliente
+export const TIPOS_PENDENCIA = {
+  aprovacao: 'Aprovação (layout, estudo, projeto)',
+  pagamento: 'Pagamento',
+  acabamento: 'Escolha de acabamento / material',
+  informacao: 'Envio de informação / documento',
+  outro: 'Outra decisão',
+};
+export const pendenciasAbertas = (pid) => store.pendencias
+  .filter(x => x.status !== 'resolvida' && (!pid || x.projeto_id === pid))
+  .sort((a, b) => String(a.prazo || '9').localeCompare(String(b.prazo || '9')));
 
 /** Complementares do projeto ainda não entregues pelos parceiros. */
 export function esperaComplementares(pid) {
