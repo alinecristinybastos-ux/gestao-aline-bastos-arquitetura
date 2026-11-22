@@ -1,22 +1,22 @@
 // =====================================================================
 //  Aplicativo: login, menu lateral e rotas
 // =====================================================================
-import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611221710';
-import { icone, h, aviso, diasAte } from './util.js?v=202611221710';
-import { nav } from './nav.js?v=202611221710';
-import { situacaoRecebimento } from './negocio.js?v=202611221710';
-import { VERSAO, DATA_VERSAO } from './versao.js?v=202611221710';
-import { abrirBackup, diasSemBackup } from './backup.js?v=202611221710';
-import { criarDadosExemplo } from './exemplo.js?v=202611221710';
+import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611221713';
+import { icone, h, aviso, diasAte } from './util.js?v=202611221713';
+import { nav } from './nav.js?v=202611221713';
+import { situacaoRecebimento } from './negocio.js?v=202611221713';
+import { VERSAO, DATA_VERSAO } from './versao.js?v=202611221713';
+import { abrirBackup, diasSemBackup } from './backup.js?v=202611221713';
+import { criarDadosExemplo } from './exemplo.js?v=202611221713';
 
-import * as painel from './telas/painel.js?v=202611221710';
-import * as projetos from './telas/projetos.js?v=202611221710';
-import * as projeto from './telas/projeto.js?v=202611221710';
-import * as clientes from './telas/clientes.js?v=202611221710';
-import * as financeiro from './telas/financeiro.js?v=202611221710';
-import * as orcamentos from './telas/orcamentos.js?v=202611221710';
-import * as tarefas from './telas/tarefas.js?v=202611221710';
-import * as parceiros from './telas/parceiros.js?v=202611221710';
+import * as painel from './telas/painel.js?v=202611221713';
+import * as projetos from './telas/projetos.js?v=202611221713';
+import * as projeto from './telas/projeto.js?v=202611221713';
+import * as clientes from './telas/clientes.js?v=202611221713';
+import * as financeiro from './telas/financeiro.js?v=202611221713';
+import * as orcamentos from './telas/orcamentos.js?v=202611221713';
+import * as tarefas from './telas/tarefas.js?v=202611221713';
+import * as parceiros from './telas/parceiros.js?v=202611221713';
 
 const MENU = [
   ['painel', 'Painel', 'painel'],

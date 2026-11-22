@@ -2,11 +2,11 @@
 //  TAREFAS DA EQUIPE — quadro (A fazer / Fazendo / Feito)
 //  Arraste os cartões entre as colunas.
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221710';
-import { h, icone, tentar, diasAte } from '../util.js?v=202611221710';
-import { nav } from '../nav.js?v=202611221710';
-import { EQUIPE } from '../config.js?v=202611221710';
-import { formTarefa, avatar, tagPrazo, rotuloProjeto } from '../componentes.js?v=202611221710';
+import { store, porId, atualizar } from '../dados.js?v=202611221713';
+import { h, icone, tentar, diasAte } from '../util.js?v=202611221713';
+import { nav } from '../nav.js?v=202611221713';
+import { EQUIPE } from '../config.js?v=202611221713';
+import { formTarefa, avatar, tagPrazo, rotuloProjeto } from '../componentes.js?v=202611221713';
 
 const COLUNAS = [['afazer', 'A fazer'], ['fazendo', 'Fazendo'], ['feito', 'Feito']];
 let pessoa = '';
