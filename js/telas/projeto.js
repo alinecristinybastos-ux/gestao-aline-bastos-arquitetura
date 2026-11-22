@@ -2,20 +2,20 @@
 //  PROJETO — etapas com checklist, financeiro, complementares,
 //  tarefas, arquivos e dados do projeto
 // =====================================================================
-import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221357';
-import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221357';
-import { nav } from '../nav.js?v=202611221357';
-import { EQUIPE } from '../config.js?v=202611221357';
-import { CATEGORIAS } from '../modelos.js?v=202611221357';
+import { store, porId, inserir, atualizar, remover } from '../dados.js?v=202611221413';
+import { h, icone, moeda, data, hoje, formModal, confirmar, aviso, tentar, diasAte } from '../util.js?v=202611221413';
+import { nav } from '../nav.js?v=202611221413';
+import { EQUIPE } from '../config.js?v=202611221413';
+import { CATEGORIAS, infoServico } from '../modelos.js?v=202611221413';
 import {
   nomeCliente, descricaoTipo, etapasDo, itensDa, progressoEtapa, progressoProjeto, faseAtual,
   recebimentosDo, concluirEtapa, reabrirEtapa, situacaoRecebimento, esperaComplementares, nomeParceiro, complAtrasado, STATUS_COMPL, pendenciasAbertas,
-} from '../negocio.js?v=202611221357';
+} from '../negocio.js?v=202611221413';
 import {
   tagPrazo, formRecebimento, tagRecebimento, marcarRecebido, formComplementar, linhaComplementar,
-  ligarLinhasComplementares, formComplementaresContratados, formPendencia, linhaPendencia, ligarPendencias, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
-} from '../componentes.js?v=202611221357';
-import { STATUS_PROJ } from './projetos.js?v=202611221357';
+  ligarLinhasComplementares, formComplementaresContratados, formServicosContratados, formServico, formRegistroServico, STATUS_SERV, formPendencia, linhaPendencia, ligarPendencias, formTarefa, avatar, blocoAnexos, ligarBlocoAnexos, opcoesClientes, opcoesEquipe, responsaveisDe, familiaDe, idadeAtual,
+} from '../componentes.js?v=202611221413';
+import { STATUS_PROJ } from './projetos.js?v=202611221413';
 
 const estado = { projeto: null, aba: 'etapas', etapa: null };
 const ST_ITEM = { pendente: 'Pendente', andamento: 'Em andamento', concluido: 'Concluído', na: 'Não se aplica' };
@@ -34,6 +34,7 @@ export function render(el, [id, aba]) {
   const pr = progressoProjeto(id);
   const cli = porId('clientes', p.cliente_id);
   const nCompl = store.complementares.filter(c => c.projeto_id === id).length;
+  const nServ = store.servicos.filter(x => x.projeto_id === id && x.status !== 'concluido').length;
   const nTar = store.tarefas.filter(t => t.projeto_id === id && t.status !== 'feito').length;
   const nArq = store.anexos.filter(a => a.ref_tipo === 'projeto' && a.ref_id === id).length;
   const cobrar = recebimentosDo(id).filter(r => ['liberado', 'atrasado'].includes(situacaoRecebimento(r).cod)).length;
@@ -71,13 +72,13 @@ export function render(el, [id, aba]) {
     }).join('')}</div>
 
     <div class="abas">
-      ${[['etapas', 'Etapas e checklist'], ['financeiro', 'Financeiro', cobrar], ['complementares', 'Complementares', nCompl], ['tarefas', 'Tarefas', nTar], ['arquivos', 'Arquivos', nArq], ['dados', 'Dados do projeto']]
+      ${[['etapas', 'Etapas e checklist'], ['financeiro', 'Financeiro', cobrar], ['complementares', 'Complementares', nCompl], ['servicos', 'Serviços', nServ], ['tarefas', 'Tarefas', nTar], ['arquivos', 'Arquivos', nArq], ['dados', 'Dados do projeto']]
         .map(([k, n, c]) => `<button data-aba="${k}" class="${estado.aba === k ? 'ativo' : ''}">${n}${c ? ` <span class="contagem">${c}</span>` : ''}</button>`).join('')}
     </div>
     <div id="aba-conteudo"></div>`;
 
   const area = el.querySelector('#aba-conteudo');
-  ({ etapas: abaEtapas, financeiro: abaFinanceiro, complementares: abaComplementares, tarefas: abaTarefas, arquivos: abaArquivos, dados: abaDados })[estado.aba](area, p);
+  ({ etapas: abaEtapas, financeiro: abaFinanceiro, complementares: abaComplementares, servicos: abaServicos, tarefas: abaTarefas, arquivos: abaArquivos, dados: abaDados })[estado.aba](area, p);
 
   el.querySelectorAll('[data-aba]').forEach(b => b.addEventListener('click', () => { estado.aba = b.dataset.aba; render(el, [id]); }));
   el.querySelectorAll('[data-ir-etapa]').forEach(b => b.addEventListener('click', () => { estado.etapa = b.dataset.irEtapa; estado.aba = 'etapas'; render(el, [id]); }));
@@ -393,6 +394,46 @@ function abaComplementares(area, p) {
   area.querySelector('#add-compl').addEventListener('click', () => formComplementar(null, { projeto_id: p.id }));
   area.querySelectorAll('#ctr-compl, #ctr-compl2').forEach(b => b.addEventListener('click', () => formComplementaresContratados(p.id)));
   ligarLinhasComplementares(area);
+}
+
+// =====================================================================
+//  ABA SERVIÇOS ADICIONAIS
+// =====================================================================
+function abaServicos(area, p) {
+  const lista = store.servicos.filter(x => x.projeto_id === p.id);
+  const cor = { a_fazer: 'neutro', andamento: 'areia', concluido: 'ok' };
+  area.innerHTML = `<div class="cartao">
+    <div class="cartao-cab"><h2>Serviços adicionais contratados</h2>
+      <button class="btn btn-peq" id="ctr-serv">${icone('check', 14)} Serviços contratados</button></div>
+    ${lista.length ? lista.map(sv => {
+      const info = infoServico(sv.servico);
+      const regs = sv.registros || [];
+      const et = info.etapa && etapasDo(p.id).find(e => e.chave === info.etapa);
+      return `<div class="servico">
+        <div class="servico-cab">
+          <div style="flex:1;min-width:0"><div>${h(sv.servico)}</div>
+            <small>${[sv.referencia && `${info.ref || 'Ref.'}: ${sv.referencia}`, info.registros && `${regs.length}${sv.quantidade ? ` de ${sv.quantidade}` : ''} ${info.registros === 'compra' ? 'compra(s) acompanhada(s)' : 'visita(s) realizada(s)'}`,
+              sv.valor && `cobrado à parte: ${moeda(sv.valor)}`, et && `etapa: ${et.nome}`, sv.concluido_em && `concluído ${data(sv.concluido_em)}`].filter(Boolean).map(h).join(' · ')}</small></div>
+          <span class="tag tag-${cor[sv.status]}">${STATUS_SERV[sv.status]}</span>
+          ${sv.status !== 'concluido' && sv.prazo ? tagPrazo(sv.prazo) : ''}
+          ${info.registros ? `<button class="btn btn-peq" data-reg-serv="${sv.id}">${icone('mais', 13)} ${info.registros === 'compra' ? 'Compra' : 'Visita'}</button>` : ''}
+          ${sv.status !== 'concluido' && !info.registros ? `<button class="btn btn-peq" data-concluir-serv="${sv.id}">${icone('check', 13)} Concluído</button>` : ''}
+          <button class="btn-icone" data-ed-serv="${sv.id}" title="Editar">${icone('editar', 15)}</button>
+        </div>
+        ${sv.quantidade && info.registros ? `<div class="progresso" style="margin:6px 0 2px"><span style="width:${Math.min(100, regs.length / sv.quantidade * 100)}%"></span></div>` : ''}
+        ${regs.length ? `<ul class="registros">${regs.map((r, i) => `<li data-ed-reg="${sv.id}" data-i="${i}"><b>${data(r.data)}</b> ${h(r.obs || '')}</li>`).join('')}</ul>` : ''}
+        ${sv.obs ? `<div class="fraco" style="font-size:.85rem;margin-top:4px">${h(sv.obs)}</div>` : ''}
+      </div>`;
+    }).join('') : `<div class="vazio">O cliente contratou serviços junto com o projeto (alvará, RRT, visitas, acompanhamento)?<br>
+      <button class="btn btn-primario" id="ctr-serv2" style="margin-top:10px">${icone('check', 14)} Marcar serviços contratados</button></div>`}
+  </div>`;
+  area.querySelectorAll('#ctr-serv, #ctr-serv2').forEach(b => b.addEventListener('click', () => formServicosContratados(p.id)));
+  area.querySelectorAll('[data-ed-serv]').forEach(b => b.addEventListener('click', () => formServico(porId('servicos', b.dataset.edServ))));
+  area.querySelectorAll('[data-reg-serv]').forEach(b => b.addEventListener('click', () => formRegistroServico(porId('servicos', b.dataset.regServ))));
+  area.querySelectorAll('[data-ed-reg]').forEach(li => li.addEventListener('click', () => formRegistroServico(porId('servicos', li.dataset.edReg), Number(li.dataset.i))));
+  area.querySelectorAll('[data-concluir-serv]').forEach(b => b.addEventListener('click', async () => {
+    await tentar(() => atualizar('servicos', b.dataset.concluirServ, { status: 'concluido', concluido_em: hoje() }), 'Serviço concluído'); nav.recarregar();
+  }));
 }
 
 // =====================================================================

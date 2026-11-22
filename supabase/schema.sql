@@ -182,6 +182,23 @@ create table if not exists pendencias (
 );
 create index if not exists idx_pend_projeto on pendencias(projeto_id);
 
+-- ---------- SERVIÇOS ADICIONAIS (alvará, RRT, visitas, acompanhamentos) ----------
+create table if not exists servicos (
+  id uuid primary key default gen_random_uuid(),
+  projeto_id uuid references projetos(id) on delete cascade,
+  servico text not null,
+  status text default 'a_fazer',   -- a_fazer | andamento | concluido
+  quantidade int,                  -- visitas / acompanhamentos contratados
+  referencia text,                 -- nº do protocolo, nº da RRT...
+  prazo date,
+  concluido_em date,
+  valor numeric,
+  registros jsonb default '[]'::jsonb, -- [{data, obs}] visitas, compras acompanhadas
+  obs text,
+  criado_em timestamptz default now()
+);
+create index if not exists idx_serv_projeto on servicos(projeto_id);
+
 -- ---------- TAREFAS DA EQUIPE ----------
 create table if not exists tarefas (
   id uuid primary key default gen_random_uuid(),
@@ -224,7 +241,7 @@ alter default privileges in schema public
 do $$
 declare t text;
 begin
-  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','pendencias','tarefas','anexos']
+  foreach t in array array['clientes','projetos','etapas','itens','recebimentos','orcamentos','parceiros','complementares','pagamentos_parceiros','pendencias','servicos','tarefas','anexos']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "equipe_total" on %I', t);

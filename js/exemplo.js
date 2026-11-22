@@ -2,10 +2,10 @@
 //  Dados de exemplo — usados SOMENTE no modo demonstração
 //  (quando o Supabase ainda não foi configurado em config.js)
 // =====================================================================
-import { store, inserir, atualizar } from './dados.js?v=202611221357';
-import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221357';
-import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221357';
-import { hoje, somarDias } from './util.js?v=202611221357';
+import { store, inserir, atualizar } from './dados.js?v=202611221413';
+import { montarModelo, PAGAMENTOS_PADRAO } from './modelos.js?v=202611221413';
+import { criarProjeto, etapasDo, itensDa } from './negocio.js?v=202611221413';
+import { hoje, somarDias } from './util.js?v=202611221413';
 
 const d = (n) => somarDias(hoje(), n);
 
@@ -79,6 +79,13 @@ export async function criarDadosExemplo() {
     { parceiro_id: carlos.id, data: d(-15), valor: 7000, forma: 'PIX', obs: 'Saldo estrutural galpão' },
     { parceiro_id: carlos.id, data: d(-3), valor: 2000, forma: 'PIX', obs: 'Adiantamento Residência Costa' },
     { parceiro_id: marcos.id, data: d(-30), valor: 3000, forma: 'Transferência' },
+  ]);
+
+  await inserir('servicos', [
+    { projeto_id: p1.id, servico: 'Processo de alvará na prefeitura', status: 'a_fazer', prazo: d(40), registros: [] },
+    { projeto_id: p1.id, servico: 'Assinatura de RRT de projeto', status: 'concluido', referencia: '0001234567', concluido_em: d(-60), registros: [] },
+    { projeto_id: p1.id, servico: 'Acompanhamento da obra', status: 'andamento', quantidade: 8, registros: [{ data: d(-20), obs: 'Marcação da obra e conferência das cotas de implantação' }, { data: d(-6), obs: 'Conferência das esperas e das alturas das vigas' }] },
+    { projeto_id: p2.id, servico: 'Acompanhamento de compras', status: 'andamento', registros: [{ data: d(-5), obs: 'Revestimentos — Portobello Shop' }] },
   ]);
 
   await inserir('pendencias', [

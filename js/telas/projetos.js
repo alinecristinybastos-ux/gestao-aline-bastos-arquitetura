@@ -1,12 +1,12 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611221357';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221357';
-import { nav } from '../nav.js?v=202611221357';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO } from '../modelos.js?v=202611221357';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221357';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares } from '../componentes.js?v=202611221357';
+import { store, atualizar } from '../dados.js?v=202611221413';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611221413';
+import { nav } from '../nav.js?v=202611221413';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, PAGAMENTOS_PADRAO, infoServico } from '../modelos.js?v=202611221413';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas } from '../negocio.js?v=202611221413';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611221413';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };
@@ -131,7 +131,7 @@ export function novoProjeto(pre = {}) {
     cliente_id: pre.cliente_id || '', nome: pre.nome || '', endereco_obra: pre.endereco_obra || '', area_m2: pre.area_m2 ?? '',
     categoria: pre.categoria || 'arquitetonico', tipo: pre.tipo || 'residencial', intervencao: pre.intervencao || 'novo',
     data_inicio: hoje(), data_assinatura: hoje(), valor_contrato: pre.valor_contrato ?? '', contrato: null, observacoes: pre.observacoes || '',
-    etapas: null, pagamentos: null, orcamento_id: pre.orcamento_id || null, complementares: pre.complementares || [],
+    etapas: null, pagamentos: null, orcamento_id: pre.orcamento_id || null, complementares: pre.complementares || [], servicos: pre.servicos || [],
   };
   const PASSOS = ['Cliente e obra', 'Tipo de projeto', 'Etapas e prazos', 'Contrato e pagamentos'];
   const m = abrirModal({ titulo: 'Novo projeto', largura: 820, corpo: '<div id="assist"></div>',
@@ -145,7 +145,8 @@ export function novoProjeto(pre = {}) {
 
   function gerarEtapas() {
     const modelo = montarModelo(st.categoria, st.tipo, precisaIntervencao() ? st.intervencao : null);
-    st.etapas = modelo.map(e => ({ ...e, incluir: !e.opcional, prazo: '', data_inicio: '' }));
+    const pelosServicos = st.servicos.map(n => infoServico(n).etapa).filter(Boolean);
+    st.etapas = modelo.map(e => ({ ...e, incluir: !e.opcional || pelosServicos.includes(e.chave), prazo: '', data_inicio: '' }));
     recalcularDatas();
     st.pagamentos = null;
   }
@@ -192,6 +193,8 @@ export function novoProjeto(pre = {}) {
       <div class="chips">${Object.entries(tipos).map(([k, v]) => `<button type="button" class="chip ${st.tipo === k ? 'sel' : ''}" data-tipo="${k}">${v}</button>`).join('')}</div>` : ''}
       ${precisaIntervencao() ? `<div class="rotulo-sec">Intervenção</div>
       <div class="chips">${Object.entries(INTERVENCOES).map(([k, v]) => `<button type="button" class="chip ${st.intervencao === k ? 'sel' : ''}" data-interv="${k}">${v}</button>`).join('')}</div>` : ''}
+      <div class="rotulo-sec" style="margin-top:6px">Serviços adicionais contratados <span class="fraco">(se houver)</span></div>
+      ${chipsServicos(st.servicos)}
       <div class="rotulo-sec" style="margin-top:6px">Projetos complementares contratados pelo cliente ${st.categoria === 'complementares' ? '<span class="obrig">*</span>' : '<span class="fraco">(se houver)</span>'}</div>
       ${chipsComplementares(st.complementares)}
       <p class="fraco" style="margin-top:-4px;font-size:.85rem">Cada um entra na aba Complementares do projeto para você escolher o parceiro, o prazo e o valor.</p>
@@ -270,6 +273,13 @@ export function novoProjeto(pre = {}) {
       }));
       corpo.querySelectorAll('[data-tipo]').forEach(b => b.addEventListener('click', () => { st.tipo = b.dataset.tipo; st.etapas = null; desenhar(); }));
       corpo.querySelectorAll('[data-interv]').forEach(b => b.addEventListener('click', () => { st.intervencao = b.dataset.interv; st.etapas = null; desenhar(); }));
+      corpo.querySelectorAll('[data-serv]').forEach(b => b.addEventListener('click', () => {
+        const n = b.dataset.serv; st.servicos = st.servicos.includes(n) ? st.servicos.filter(x => x !== n) : [...st.servicos, n];
+        // alvará e acompanhamento de obra ligam/desligam as etapas correspondentes
+        const ch = infoServico(n).etapa;
+        if (ch && st.etapas) { st.etapas.forEach(e => { if (e.chave === ch) e.incluir = st.servicos.includes(n); }); recalcularDatas(); st.pagamentos = null; }
+        desenhar();
+      }));
       corpo.querySelectorAll('[data-comp-ctr]').forEach(b => b.addEventListener('click', () => {
         const d = b.dataset.compCtr; st.complementares = st.complementares.includes(d) ? st.complementares.filter(x => x !== d) : [...st.complementares, d]; desenhar();
       }));
@@ -347,6 +357,7 @@ export function novoProjeto(pre = {}) {
         contrato: st.contrato,
       });
       if (st.complementares.length) await registrarComplementares(p.id, st.complementares);
+      if (st.servicos.length) await registrarServicos(p.id, st.servicos);
       if (st.orcamento_id) await atualizar('orcamentos', st.orcamento_id, { projeto_id: p.id, status: 'aprovado' });
       m.fechar(); aviso('Projeto criado com todas as etapas');
       nav.ir('projeto/' + p.id);

@@ -52,6 +52,19 @@ export const DISCIPLINAS = [
   'Fundações', 'Climatização (HVAC)', 'Gás', 'Cabeamento / Automação', 'Luminotécnico',
   'Paisagismo', 'Impermeabilização', 'Topografia', 'Sondagem', 'Outro',
 ];
+// Serviços adicionais vendidos junto com o projeto
+// registros: serviço com várias ocorrências (visitas, compras acompanhadas)
+// etapa: chave da etapa opcional que o serviço inclui automaticamente no projeto
+export const SERVICOS_ADICIONAIS = [
+  { nome: 'Processo de alvará na prefeitura', etapa: 'licenciamento', ref: 'Nº do protocolo' },
+  { nome: 'Assinatura de RRT de projeto', ref: 'Nº da RRT' },
+  { nome: 'Assinatura de RRT de execução', ref: 'Nº da RRT' },
+  { nome: 'Visita técnica', registros: 'visita' },
+  { nome: 'Acompanhamento da obra', etapa: 'acompanhamento', registros: 'visita' },
+  { nome: 'Acompanhamento de compras', registros: 'compra' },
+];
+export const infoServico = (nome) => SERVICOS_ADICIONAIS.find(x => x.nome === nome) || {};
+
 /** Opções de disciplina incluindo um valor antigo que não esteja mais na lista. */
 export const opcoesDisciplina = (atual) => [...DISCIPLINAS, ...(atual && !DISCIPLINAS.includes(atual) ? [atual] : [])].map(d => [d, d]);
 

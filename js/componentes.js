@@ -1,12 +1,12 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221357';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221357';
-import { EQUIPE } from './config.js?v=202611221357';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS } from './modelos.js?v=202611221357';
-import { nav } from './nav.js?v=202611221357';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221357';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo } from './dados.js?v=202611221413';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221413';
+import { EQUIPE } from './config.js?v=202611221413';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221413';
+import { nav } from './nav.js?v=202611221413';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221413';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -390,6 +390,103 @@ export function ligarPendencias(raiz) {
     tentar(() => atualizar('pendencias', x.id, { cobrancas: (x.cobrancas || 0) + 1, ultima_cobranca: hoje(), prazo: somarDias(hoje(), 3) }))
       .then(() => { aviso('Cobrança registrada. Próximo lembrete em 3 dias.'); nav.recarregar(); });
   }));
+}
+
+// ---------------------------------------------------------------- serviços adicionais
+export const STATUS_SERV = { a_fazer: 'A fazer', andamento: 'Em andamento', concluido: 'Concluído' };
+
+export function chipsServicos(sel) {
+  return `<div class="chips">${SERVICOS_ADICIONAIS.map(x => `<button type="button" class="chip ${sel.includes(x.nome) ? 'sel' : ''}" data-serv="${h(x.nome)}">${sel.includes(x.nome) ? '✓ ' : ''}${h(x.nome)}</button>`).join('')}</div>`;
+}
+
+export async function registrarServicos(projetoId, nomes) {
+  const ja = store.servicos.filter(x => x.projeto_id === projetoId).map(x => x.servico);
+  const novos = nomes.filter(n => !ja.includes(n));
+  if (novos.length) await inserir('servicos', novos.map(n => ({ projeto_id: projetoId, servico: n, status: 'a_fazer', registros: [] })));
+  return novos.length;
+}
+
+export function formServicosContratados(projetoId) {
+  const existentes = store.servicos.filter(x => x.projeto_id === projetoId);
+  let sel = existentes.map(x => x.servico);
+  const m = abrirModal({
+    titulo: 'Serviços adicionais contratados', largura: 640,
+    corpo: `<p class="fraco" style="margin-bottom:12px">Marque o que o cliente contratou junto com o projeto.</p><div id="sv-chips"></div>`,
+    rodape: `<span class="espaco"></span><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-ok>Salvar</button>`,
+  });
+  const desenhar = () => {
+    m.el.querySelector('#sv-chips').innerHTML = chipsServicos(sel);
+    m.el.querySelectorAll('[data-serv]').forEach(b => b.addEventListener('click', () => {
+      const n = b.dataset.serv; sel = sel.includes(n) ? sel.filter(x => x !== n) : [...sel, n]; desenhar();
+    }));
+  };
+  desenhar();
+  m.el.querySelector('[data-ok]').addEventListener('click', async () => {
+    const tirar = existentes.filter(x => !sel.includes(x.servico));
+    const comDados = tirar.filter(x => x.status !== 'a_fazer' || (x.registros || []).length || x.referencia);
+    if (comDados.length && !await confirmar(`${comDados.map(x => x.servico).join(', ')} já ${comDados.length > 1 ? 'têm' : 'tem'} andamento registrado. Remover mesmo assim?`, { ok: 'Remover', perigo: true })) return;
+    await tentar(async () => {
+      for (const x of tirar) await remover('servicos', x.id);
+      await registrarServicos(projetoId, sel);
+    }, 'Serviços atualizados');
+    m.fechar(); nav.recarregar();
+  });
+}
+
+export function formServico(sv) {
+  const info = infoServico(sv.servico);
+  const campos = [
+    { nome: 'status', rotulo: 'Situação', tipo: 'select', vazio: false, opcoes: Object.entries(STATUS_SERV), largura: 'meia' },
+    { nome: 'prazo', rotulo: 'Prazo', tipo: 'date', largura: 'meia' },
+    ...(info.registros ? [{ nome: 'quantidade', rotulo: info.registros === 'visita' ? 'Visitas contratadas' : 'Quantidade contratada', tipo: 'number', largura: 'meia', ajuda: 'Deixe vazio se não houver limite' }] : []),
+    { nome: 'referencia', rotulo: info.ref || 'Referência', largura: 'meia', placeholder: info.ref ? '' : 'Ex.: nº de protocolo' },
+    { nome: 'valor', rotulo: 'Valor cobrado do cliente (se à parte)', tipo: 'moeda', largura: 'meia' },
+    { nome: 'concluido_em', rotulo: 'Concluído em', tipo: 'date', largura: 'meia' },
+    { nome: 'obs', rotulo: 'Observações', tipo: 'textarea', linhas: 3 },
+  ];
+  const m = formModal({
+    titulo: sv.servico, campos, valores: sv,
+    extraRodape: `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>`,
+    onSalvar: async d => {
+      if (d.status === 'concluido' && !d.concluido_em) d.concluido_em = hoje();
+      if (d.status !== 'concluido') d.concluido_em = null;
+      await atualizar('servicos', sv.id, d); aviso('Serviço atualizado'); nav.recarregar();
+    },
+  });
+  m.el.querySelector('[data-excluir]').addEventListener('click', async () => {
+    if (!await confirmar(`Excluir o serviço "${sv.servico}" deste projeto?`, { ok: 'Excluir', perigo: true })) return;
+    await tentar(() => remover('servicos', sv.id), 'Serviço excluído'); m.fechar(); nav.recarregar();
+  });
+}
+
+export function formRegistroServico(sv, indice = null) {
+  const info = infoServico(sv.servico);
+  const reg = indice != null ? (sv.registros || [])[indice] : null;
+  const m = formModal({
+    titulo: reg ? 'Editar registro' : (info.registros === 'compra' ? 'Registrar compra acompanhada' : 'Registrar visita'),
+    campos: [
+      { nome: 'data', rotulo: 'Data', tipo: 'date', obrigatorio: true, largura: 'meia', padrao: hoje() },
+      { nome: 'obs', rotulo: info.registros === 'compra' ? 'O que foi comprado / loja / observações' : 'O que foi visto e orientado', tipo: 'textarea', linhas: 4 },
+    ],
+    valores: reg || {},
+    extraRodape: reg ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
+    onSalvar: async d => {
+      const lista = [...(sv.registros || [])];
+      if (reg) lista[indice] = d; else lista.push(d);
+      lista.sort((a, b) => String(a.data).localeCompare(String(b.data)));
+      const patch = { registros: lista };
+      if (sv.status === 'a_fazer') patch.status = 'andamento';
+      if (sv.quantidade && lista.length >= sv.quantidade && sv.status !== 'concluido') {
+        patch.status = 'concluido'; patch.concluido_em = hoje();
+      }
+      await atualizar('servicos', sv.id, patch);
+      aviso(sv.quantidade ? `${lista.length} de ${sv.quantidade} realizadas` : 'Registro salvo'); nav.recarregar();
+    },
+  });
+  m.el.querySelector('[data-excluir]')?.addEventListener('click', async () => {
+    const lista = (sv.registros || []).filter((_, i) => i !== indice);
+    await tentar(() => atualizar('servicos', sv.id, { registros: lista }), 'Registro excluído'); m.fechar(); nav.recarregar();
+  });
 }
 
 // ---------------------------------------------------------------- complementares contratados
