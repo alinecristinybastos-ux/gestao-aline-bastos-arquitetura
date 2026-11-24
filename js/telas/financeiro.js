@@ -2,12 +2,12 @@
 //  FINANCEIRO — resumo do mês (receitas, despesas e resultado),
 //  a receber, recebidos, parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611241902';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611241902';
-import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611241902';
-import { nav } from '../nav.js?v=202611241902';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro, origemRecebimento, clienteDoRecebimento } from '../negocio.js?v=202611241902';
-import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa, formReceitaAvulsa, editarRecebimento } from '../componentes.js?v=202611241902';
+import { store, porId, atualizar } from '../dados.js?v=202611241903';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611241903';
+import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611241903';
+import { nav } from '../nav.js?v=202611241903';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro, origemRecebimento, clienteDoRecebimento } from '../negocio.js?v=202611241903';
+import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa, formReceitaAvulsa, editarRecebimento } from '../componentes.js?v=202611241903';
 
 let aba = 'mes';
 let mesSel = hoje().slice(0, 7);
@@ -64,7 +64,14 @@ function tabMes(area, recs) {
   const noMes = (iso) => String(iso || '').startsWith(mesSel);
   const recebidos = recs.filter(r => r.status === 'pago' && noMes(r.pago_em)).sort((x, y) => String(x.pago_em).localeCompare(String(y.pago_em)));
   const previstos = recs.filter(r => r.status !== 'pago' && noMes(dataReferencia(r))).sort((x, y) => String(dataReferencia(x)).localeCompare(String(dataReferencia(y))));
-  const despesas = store.despesas.filter(d => noMes(d.vencimento)).sort((x, y) => String(x.vencimento).localeCompare(String(y.vencimento)));
+  // pendências primeiro: vencidas → a pagar → pagas
+  const pesoDesp = (d) => d.pago ? 2 : d.vencimento < hoje() ? 0 : 1;
+  const despesas = store.despesas.filter(d => noMes(d.vencimento))
+    .sort((x, y) => pesoDesp(x) - pesoDesp(y) || String(x.vencimento).localeCompare(String(y.vencimento)));
+  // entradas: cobrar agora → a vencer → aguardando fase → recebidas
+  const pesoRec = (r) => ({ atrasado: 0, liberado: 0, previsto: 1, aguardando: 2, pago: 3 }[situacaoRecebimento(r).cod] ?? 1);
+  const entradas = [...recebidos, ...previstos].sort((x, y) => pesoRec(x) - pesoRec(y)
+    || String(x.status === 'pago' ? x.pago_em : dataReferencia(x)).localeCompare(String(y.status === 'pago' ? y.pago_em : dataReferencia(y))));
   const pagParc = store.pagamentos_parceiros.filter(p => noMes(p.data));
   const vRec = soma(recebidos), vPrev = soma(previstos);
   const vDespPaga = soma(despesas.filter(d => d.pago)), vDesp = soma(despesas), vParc = soma(pagParc);
@@ -96,7 +103,7 @@ function tabMes(area, recs) {
       <div class="cartao"><div class="cartao-cab"><h2>Entradas</h2><span class="fraco">${moeda(vRec + vPrev)}</span>
           <button class="btn btn-peq" data-nova-rec>${icone('mais', 14)} Receita</button></div>
         ${recebidos.length + previstos.length ? `<div class="tabela-envolve"><table class="tabela"><tbody>
-          ${[...recebidos, ...previstos].map(r => {
+          ${entradas.map(r => {
             return `<tr><td><div>${h(r.descricao)}</div><div class="fraco">${h(origemRecebimento(r))}</div>
                 <div class="linha-sit">${tagRecebimento(r)} <span class="fraco">${data(r.status === 'pago' ? r.pago_em : dataReferencia(r))}</span></div></td>
               <td class="num">${moeda(r.valor)}</td>

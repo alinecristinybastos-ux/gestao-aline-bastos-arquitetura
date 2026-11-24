@@ -1,12 +1,12 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611241902';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611241902';
-import { nav } from '../nav.js?v=202611241902';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611241902';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas, saudeProjeto, NOMES_SAUDE } from '../negocio.js?v=202611241902';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611241902';
+import { store, atualizar } from '../dados.js?v=202611241903';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611241903';
+import { nav } from '../nav.js?v=202611241903';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611241903';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas, saudeProjeto, NOMES_SAUDE } from '../negocio.js?v=202611241903';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611241903';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };
