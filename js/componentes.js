@@ -1,13 +1,13 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611241910';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611241910';
-import { EQUIPE } from './config.js?v=202611241910';
-import { abrirRecibo, abrirReciboSalario, ehDespesaEquipe } from './recibo.js?v=202611241910';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611241910';
-import { nav } from './nav.js?v=202611241910';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611241910';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611241914';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611241914';
+import { EQUIPE } from './config.js?v=202611241914';
+import { abrirRecibo, abrirReciboSalario, ehDespesaEquipe } from './recibo.js?v=202611241914';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611241914';
+import { nav } from './nav.js?v=202611241914';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611241914';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -477,6 +477,7 @@ export function formDespesa(desp = null, padrao = {}) {
       ${desp.grupo && mesmaSerieDepois(desp).length ? `<button class="btn btn-leve" type="button" data-excluir-serie>Excluir este e os próximos</button>` : ''}` : '',
     onSalvar: async d => {
       const { repetir, serie } = d; delete d.repetir; delete d.serie;
+      const jaEraPaga = !!desp?.pago; // guardar antes de salvar (salvar atualiza o próprio registro)
       if (d.pago && !d.pago_em) d.pago_em = hoje();
       if (!d.pago) d.pago_em = null;
       if (desp) {
@@ -488,7 +489,7 @@ export function formDespesa(desp = null, padrao = {}) {
         await inserir('despesas', datas.map((venc, i) => ({ ...d, vencimento: venc, grupo, pago: i === 0 ? d.pago : false, pago_em: i === 0 ? d.pago_em : null })));
       } else await inserir('despesas', d);
       aviso(repetir && repetir !== 'nao' ? `Despesa lançada: ${REPETICOES[repetir].aviso}` : 'Despesa salva'); nav.recarregar();
-      if (d.pago && !desp?.pago && ehDespesaEquipe(d)) setTimeout(() => abrirReciboSalario({ ...d, ...(desp || {}), ...d }), 200);
+      if (d.pago && !jaEraPaga && ehDespesaEquipe(d)) setTimeout(() => abrirReciboSalario({ ...(desp || {}), ...d }), 200);
     },
   });
   const f = m.el.querySelector('form');
@@ -672,6 +673,7 @@ export function formRecebimento(r = null, projetoId) {
     valores: r || { gatilho: 'data', status: 'previsto' },
     extraRodape: r ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
     onSalvar: async (d) => {
+      const jaEraPago = r?.status === 'pago';
       if (d.gatilho === 'etapa') { if (!d.etapa_id) throw new Error('Escolha a etapa que libera o pagamento'); d.vencimento = null; }
       else { d.etapa_id = null; }
       if (d.status === 'pago' && !d.pago_em) d.pago_em = hoje();
@@ -680,7 +682,7 @@ export function formRecebimento(r = null, projetoId) {
       if (r) reg = await atualizar('recebimentos', r.id, d);
       else [reg] = await inserir('recebimentos', { ...d, projeto_id: projetoId, ordem: store.recebimentos.length });
       aviso('Pagamento salvo'); nav.recarregar();
-      if (d.status === 'pago' && r?.status !== 'pago') setTimeout(() => abrirRecibo(reg), 200);
+      if (d.status === 'pago' && !jaEraPago) setTimeout(() => abrirRecibo(reg), 200);
     },
   });
   const f = m.el.querySelector('form');
@@ -714,6 +716,7 @@ export function formReceitaAvulsa(r = null) {
     titulo: r ? 'Receita avulsa' : 'Nova receita avulsa', campos, valores: r || { status: 'previsto' },
     extraRodape: r ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
     onSalvar: async d => {
+      const jaEraPago = r?.status === 'pago';
       if (d.status === 'pago' && !d.pago_em) d.pago_em = hoje();
       if (d.status !== 'pago') d.pago_em = null;
       Object.assign(d, { gatilho: 'data', etapa_id: null, projeto_id: null });
@@ -721,7 +724,7 @@ export function formReceitaAvulsa(r = null) {
       if (r) reg = await atualizar('recebimentos', r.id, d);
       else [reg] = await inserir('recebimentos', { ...d, ordem: 0 });
       aviso('Receita salva'); nav.recarregar();
-      if (d.status === 'pago' && r?.status !== 'pago') setTimeout(() => abrirRecibo(reg), 200);
+      if (d.status === 'pago' && !jaEraPago) setTimeout(() => abrirRecibo(reg), 200);
     },
   });
   const f = m.el.querySelector('form');
