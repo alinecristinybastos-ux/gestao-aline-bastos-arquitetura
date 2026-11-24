@@ -91,7 +91,7 @@ a { color: var(--verde); text-decoration: none; }
 
 .principal { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; isolation: isolate; }
 .topo-movel { display: none; }
-.conteudo { padding: 28px 34px 60px; max-width: 1320px; width: 100%; margin: 0 auto; }
+.conteudo { padding: 26px 28px 60px; width: 100%; }
 
 /* ---------------------------------------------------------------- cabeçalho de página */
 .cab { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
