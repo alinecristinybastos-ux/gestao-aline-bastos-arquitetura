@@ -5,9 +5,9 @@
 //  Os dados pessoais (nome, CAU, CPF, PIX) ficam no banco (tabela
 //  config), e não no código, porque o site é público.
 // =====================================================================
-import { store, porId, inserir, atualizar } from './dados.js?v=202611221807';
-import { h, moeda, hoje, formModal, aviso, icone } from './util.js?v=202611221807';
-import { CATEGORIAS } from './modelos.js?v=202611221807';
+import { store, porId, inserir, atualizar } from './dados.js?v=202611241851';
+import { h, moeda, hoje, formModal, aviso, icone } from './util.js?v=202611241851';
+import { CATEGORIAS } from './modelos.js?v=202611241851';
 
 // ---------------------------------------------------------------- dados do escritório
 export const configEscritorio = () => store.config.find(c => c.id === 'escritorio')?.dados || null;
@@ -76,6 +76,8 @@ export function valorExtenso(v) {
 function textoReferente(r) {
   const p = porId('projetos', r.projeto_id);
   const d = String(r.descricao || '').trim();
+  // receita avulsa: "ao pagamento de visita técnica em 20/11"
+  if (!p) return `ao pagamento de ${d.charAt(0).toLowerCase()}${d.slice(1)}`;
   let parcela;
   if (/^entrada/i.test(d)) parcela = 'da entrada';
   else if (/3d|estudo preliminar/i.test(d)) parcela = 'da parcela da apresentação do 3D';
@@ -95,7 +97,7 @@ export function abrirRecibo(r) {
     return formConfigRecibo(() => abrirRecibo(r));
   }
   const p = porId('projetos', r.projeto_id);
-  const cli = porId('clientes', p?.cliente_id);
+  const cli = porId('clientes', r.cliente_id || p?.cliente_id);
   const m = formModal({
     titulo: 'Gerar recibo em PDF', largura: 620, botao: 'Gerar PDF',
     campos: [

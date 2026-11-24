@@ -1,12 +1,12 @@
 // =====================================================================
 //  CLIENTES — lista e ficha do cliente
 // =====================================================================
-import { store, porId, remover } from '../dados.js?v=202611221807';
-import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611221807';
-import { nav } from '../nav.js?v=202611221807';
-import { recebimentosDo } from '../negocio.js?v=202611221807';
-import { formCliente, ehPJ, responsaveisDe, familiaDe, idadeAtual } from '../componentes.js?v=202611221807';
-import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611221807';
+import { store, porId, remover } from '../dados.js?v=202611241851';
+import { h, icone, moeda, data, confirmar, tentar } from '../util.js?v=202611241851';
+import { nav } from '../nav.js?v=202611241851';
+import { recebimentosDo } from '../negocio.js?v=202611241851';
+import { formCliente, ehPJ, responsaveisDe, familiaDe, idadeAtual } from '../componentes.js?v=202611241851';
+import { cartaoProjeto, ligarCartoes, novoProjeto } from './projetos.js?v=202611241851';
 
 let busca = '';
 
@@ -43,7 +43,7 @@ function ficha(el, id) {
   if (!c) { el.innerHTML = '<div class="cartao vazio">Cliente não encontrado.</div>'; return; }
   const ps = store.projetos.filter(p => p.cliente_id === id);
   const orcs = store.orcamentos.filter(o => o.cliente_id === id);
-  const recs = ps.flatMap(p => recebimentosDo(p.id));
+  const recs = [...ps.flatMap(p => recebimentosDo(p.id)), ...store.recebimentos.filter(r => !r.projeto_id && r.cliente_id === id)];
   const total = recs.reduce((s, r) => s + Number(r.valor || 0), 0);
   const pago = recs.filter(r => r.status === 'pago').reduce((s, r) => s + Number(r.valor || 0), 0);
   const zap = (c.telefone || responsaveisDe(c)[0]?.telefone || '').replace(/\D/g, '');

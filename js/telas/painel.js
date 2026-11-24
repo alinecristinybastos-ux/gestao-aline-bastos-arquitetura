@@ -1,13 +1,13 @@
 // =====================================================================
 //  PAINEL — visão geral do escritório
 // =====================================================================
-import { store, porId } from '../dados.js?v=202611221807';
-import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611221807';
-import { nav } from '../nav.js?v=202611221807';
-import { ESCRITORIO } from '../config.js?v=202611221807';
-import { nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas, saudeProjeto } from '../negocio.js?v=202611221807';
-import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611221807';
-import { novoProjeto } from './projetos.js?v=202611221807';
+import { store, porId } from '../dados.js?v=202611241851';
+import { h, icone, moeda, diasAte, hoje, prazoTexto, tentar } from '../util.js?v=202611241851';
+import { nav } from '../nav.js?v=202611241851';
+import { ESCRITORIO } from '../config.js?v=202611241851';
+import { origemRecebimento, nomeCliente, faseAtual, progressoProjeto, situacaoRecebimento, complAtrasado, nomeParceiro, aguardandoParceiros, pendenciasAbertas, saudeProjeto } from '../negocio.js?v=202611241851';
+import { tagPrazo, tagRecebimento, marcarRecebido, linhaPendencia, ligarPendencias } from '../componentes.js?v=202611241851';
+import { novoProjeto } from './projetos.js?v=202611241851';
 
 function saudacao() {
   const hr = new Date().getHours();
@@ -41,7 +41,7 @@ function proximosPrazos() {
     lista.push({ data: x.prazo, tit: `Cobrar cliente: ${x.descricao}`, sub: porId('projetos', x.projeto_id)?.nome || '', tipo: 'Cliente', ir: `projeto/${x.projeto_id}` });
   });
   store.recebimentos.filter(r => r.status !== 'pago' && r.gatilho === 'data' && r.vencimento && diasAte(r.vencimento) <= LIMITE).forEach(r => {
-    lista.push({ data: r.vencimento, tit: `${r.descricao} · ${moeda(r.valor)}`, sub: porId('projetos', r.projeto_id)?.nome || '', tipo: 'Recebimento', ir: `projeto/${r.projeto_id}/financeiro` });
+    lista.push({ data: r.vencimento, tit: `${r.descricao} · ${moeda(r.valor)}`, sub: origemRecebimento(r), tipo: 'Recebimento', ir: r.projeto_id ? `projeto/${r.projeto_id}/financeiro` : 'financeiro' });
   });
   return lista.sort((a, b) => a.data.localeCompare(b.data)).slice(0, 14);
 }
@@ -98,8 +98,7 @@ export function render(el) {
         <div class="cartao">
           <div class="cartao-cab"><h2>Pagamentos para cobrar</h2><a href="#/financeiro" class="btn btn-peq btn-leve">Financeiro ${icone('seta', 14)}</a></div>
           ${paraCobrar.length ? `<div class="tabela-envolve"><table class="tabela"><tbody>${paraCobrar.map(r => {
-            const p = porId('projetos', r.projeto_id);
-            return `<tr><td><div>${h(r.descricao)}</div><div class="fraco">${h(p?.nome || '')} · ${h(nomeCliente(p?.cliente_id))}</div></td>
+            return `<tr><td><div>${h(r.descricao)}</div><div class="fraco">${h(origemRecebimento(r))}</div></td>
               <td>${tagRecebimento(r)}</td><td class="num">${moeda(r.valor)}</td>
               <td class="num"><button class="btn btn-peq" data-receber="${r.id}">${icone('check', 14)} Recebido</button></td></tr>`;
           }).join('')}</tbody></table></div>` : '<div class="vazio">Nada para cobrar agora. Os pagamentos por fase aparecem aqui assim que a etapa é concluída.</div>'}

@@ -2,9 +2,9 @@
 //  Regras do escritório: criação de projeto, fases, progresso,
 //  situação dos recebimentos e dos complementares.
 // =====================================================================
-import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611221807';
-import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611221807';
-import { hoje, diasAte } from './util.js?v=202611221807';
+import { store, inserir, atualizar, porId, enviarArquivo } from './dados.js?v=202611241851';
+import { itensDoGrupo, CATEGORIAS, TIPOS, INTERVENCOES, FASE_DA_CHAVE } from './modelos.js?v=202611241851';
+import { hoje, diasAte } from './util.js?v=202611241851';
 
 export const nomeCliente = (id) => porId('clientes', id)?.nome || 'Sem cliente';
 export const nomeParceiro = (id) => porId('parceiros', id)?.nome || 'A definir';
@@ -51,6 +51,14 @@ export function colunaDoQuadro(p) {
 }
 
 // ---------------------------------------------------------------- recebimentos
+/** Cliente de um recebimento (do projeto, ou direto na receita avulsa). */
+export const clienteDoRecebimento = (r) => r.cliente_id || porId('projetos', r.projeto_id)?.cliente_id || null;
+/** "Projeto · Cliente" ou "Receita avulsa · Cliente". */
+export function origemRecebimento(r) {
+  const p = porId('projetos', r.projeto_id);
+  return `${p ? p.nome : 'Receita avulsa'} · ${nomeCliente(clienteDoRecebimento(r))}`;
+}
+
 export function situacaoRecebimento(r) {
   if (r.status === 'pago') return { cod: 'pago', txt: 'Recebido' };
   if (r.gatilho === 'etapa') {

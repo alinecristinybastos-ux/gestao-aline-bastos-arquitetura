@@ -2,12 +2,12 @@
 //  FINANCEIRO — resumo do mês (receitas, despesas e resultado),
 //  a receber, recebidos, parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611221807';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611221807';
-import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611221807';
-import { nav } from '../nav.js?v=202611221807';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro } from '../negocio.js?v=202611221807';
-import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa } from '../componentes.js?v=202611221807';
+import { store, porId, atualizar } from '../dados.js?v=202611241851';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611241851';
+import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611241851';
+import { nav } from '../nav.js?v=202611241851';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro, origemRecebimento, clienteDoRecebimento } from '../negocio.js?v=202611241851';
+import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa, formReceitaAvulsa, editarRecebimento } from '../componentes.js?v=202611241851';
 
 let aba = 'mes';
 let mesSel = hoje().slice(0, 7);
@@ -29,7 +29,7 @@ export function render(el) {
 
   el.innerHTML = `
     <div class="cab"><div class="titulos"><h1>Financeiro</h1><div class="sub">Receitas dos projetos, despesas do escritório e pagamentos aos parceiros.</div></div>
-      <div class="acoes"><button class="btn btn-leve" id="cfg-recibo">${icone('pdf', 16)} Dados do recibo</button><button class="btn btn-primario" id="nova-desp">${icone('mais', 16)} Despesa</button></div></div>
+      <div class="acoes"><button class="btn btn-leve" id="cfg-recibo">${icone('pdf', 16)} Dados do recibo</button><button class="btn" id="nova-rec">${icone('mais', 16)} Receita</button><button class="btn btn-primario" id="nova-desp">${icone('mais', 16)} Despesa</button></div></div>
     <div class="indicadores">
       <div class="indicador ${cobrar.length ? 'alerta' : ''}"><div class="rot">Para cobrar agora</div><div class="val">${moeda(soma(cobrar))}</div><div class="det">fases entregues ou datas vencidas</div></div>
       <div class="indicador"><div class="rot">A receber (total)</div><div class="val">${moeda(soma(abertos))}</div><div class="det">${abertos.length} parcelas</div></div>
@@ -46,6 +46,7 @@ export function render(el) {
   ({ mes: () => tabMes(area, recs), receber: () => tabReceber(area, abertos), recebidos: () => tabRecebidos(area, recs), pagar: () => tabPagar(area, aPagar), ano: () => tabAno(area, recs) })[aba]();
   el.querySelectorAll('[data-aba]').forEach(b => b.addEventListener('click', () => { aba = b.dataset.aba; render(el); }));
   el.querySelector('#cfg-recibo').addEventListener('click', () => formConfigRecibo());
+  el.querySelector('#nova-rec').addEventListener('click', () => formReceitaAvulsa());
   el.querySelector('#nova-desp').addEventListener('click', () => formDespesa(null, { vencimento: mesSel === hoje().slice(0, 7) ? hoje() : mesSel + '-10' }));
 }
 
@@ -92,11 +93,11 @@ function tabMes(area, recs) {
     </div>
 
     <div class="grade grade-2" style="align-items:start">
-      <div class="cartao"><div class="cartao-cab"><h2>Entradas</h2><span class="fraco">${moeda(vRec + vPrev)}</span></div>
+      <div class="cartao"><div class="cartao-cab"><h2>Entradas</h2><span class="fraco">${moeda(vRec + vPrev)}</span>
+          <button class="btn btn-peq" data-nova-rec>${icone('mais', 14)} Receita</button></div>
         ${recebidos.length + previstos.length ? `<div class="tabela-envolve"><table class="tabela"><tbody>
           ${[...recebidos, ...previstos].map(r => {
-            const p = porId('projetos', r.projeto_id);
-            return `<tr><td><div>${h(r.descricao)}</div><div class="fraco">${h(p?.nome || '')} · ${h(nomeCliente(p?.cliente_id))}</div>
+            return `<tr><td><div>${h(r.descricao)}</div><div class="fraco">${h(origemRecebimento(r))}</div>
                 <div class="linha-sit">${tagRecebimento(r)} <span class="fraco">${data(r.status === 'pago' ? r.pago_em : dataReferencia(r))}</span></div></td>
               <td class="num">${moeda(r.valor)}</td>
               <td class="num">${r.status !== 'pago' ? `<button class="btn-icone" data-receber="${r.id}" title="Marcar como recebido">${icone('check', 16)}</button>` : botaoRecibo(r)}</td></tr>`;
@@ -125,6 +126,7 @@ function tabMes(area, recs) {
 
   area.querySelectorAll('[data-mes-delta]').forEach(b => b.addEventListener('click', () => { trocarMes(Number(b.dataset.mesDelta)); nav.recarregar(); }));
   area.querySelector('[data-mes-hoje]')?.addEventListener('click', () => { mesSel = hoje().slice(0, 7); nav.recarregar(); });
+  area.querySelector('[data-nova-rec]').addEventListener('click', () => formReceitaAvulsa());
   area.querySelector('[data-nova-desp]').addEventListener('click', () => formDespesa(null, { vencimento: mesSel === hoje().slice(0, 7) ? hoje() : mesSel + '-10' }));
   area.querySelectorAll('[data-desp]').forEach(tr => tr.addEventListener('click', e => {
     if (e.target.closest('[data-pagar-desp]')) return;
@@ -141,7 +143,7 @@ function linhaRec(r, comAcao = true) {
   const et = porId('etapas', r.etapa_id);
   const ref = dataReferencia(r);
   return `<tr>
-    <td><div>${h(r.descricao)}</div><div class="fraco"><a href="#/projeto/${r.projeto_id}/financeiro">${h(p?.nome || '')}</a> · ${h(nomeCliente(p?.cliente_id))}</div></td>
+    <td><div>${h(r.descricao)}</div><div class="fraco">${p ? `<a href="#/projeto/${r.projeto_id}/financeiro">${h(p.nome)}</a>` : '<span class="tag tag-areia">avulsa</span>'} · ${h(nomeCliente(clienteDoRecebimento(r)))}</div></td>
     <td class="fraco">${r.gatilho === 'etapa' ? `Fase: ${h(et?.nome || '—')}${ref && r.status !== 'pago' ? `<br>${et?.status === 'concluida' ? 'concluída' : 'prevista'} ${data(ref)}` : ''}` : `Vence ${data(r.vencimento)}`}</td>
     <td>${tagRecebimento(r)}${r.status === 'pago' ? `<div class="fraco">${data(r.pago_em)}${r.forma ? ' · ' + h(r.forma) : ''}</div>` : ''}</td>
     <td class="num">${moeda(r.valor)}</td>
@@ -155,7 +157,7 @@ function ligarRec(area) {
     await tentar(() => marcarRecebido(porId('recebimentos', b.dataset.receber))); nav.recarregar();
   }));
   area.querySelectorAll('[data-editar-rec]').forEach(b => b.addEventListener('click', () => {
-    const r = porId('recebimentos', b.dataset.editarRec); formRecebimento(r, r.projeto_id);
+    editarRecebimento(porId('recebimentos', b.dataset.editarRec));
   }));
 }
 

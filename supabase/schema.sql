@@ -92,12 +92,15 @@ create table if not exists recebimentos (
   gatilho text default 'data', -- data | etapa
   vencimento date,
   etapa_id uuid references etapas(id) on delete set null,
+  cliente_id uuid references clientes(id) on delete set null, -- receita avulsa (sem projeto)
   status text default 'previsto', -- previsto | pago
   pago_em date,
   forma text,
   obs text,
   ordem int default 0
 );
+
+alter table if exists recebimentos add column if not exists cliente_id uuid references clientes(id) on delete set null;
 
 -- ---------- ORÇAMENTOS ----------
 create table if not exists orcamentos (

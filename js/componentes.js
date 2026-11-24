@@ -1,13 +1,13 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611221807';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611221807';
-import { EQUIPE } from './config.js?v=202611221807';
-import { abrirRecibo } from './recibo.js?v=202611221807';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611221807';
-import { nav } from './nav.js?v=202611221807';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611221807';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611241851';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611241851';
+import { EQUIPE } from './config.js?v=202611241851';
+import { abrirRecibo } from './recibo.js?v=202611241851';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611241851';
+import { nav } from './nav.js?v=202611241851';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611241851';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -696,6 +696,43 @@ export function formRecebimento(r = null, projetoId) {
     m.fechar(); nav.recarregar();
   });
 }
+
+/** Receita avulsa: entrada ligada só ao cliente (visita, consultoria, trabalho antigo). */
+export function formReceitaAvulsa(r = null) {
+  const campos = [
+    { nome: 'cliente_id', rotulo: 'Cliente', tipo: 'select', opcoes: opcoesClientes(), obrigatorio: true, largura: 'meia' },
+    { nome: 'valor', rotulo: 'Valor', tipo: 'moeda', obrigatorio: true, largura: 'meia' },
+    { nome: 'descricao', rotulo: 'Descrição', obrigatorio: true, placeholder: 'Ex.: Visita técnica em 20/11; Consultoria de acabamentos…' },
+    { nome: 'vencimento', rotulo: 'Vencimento', tipo: 'date', obrigatorio: true, largura: 'meia', padrao: hoje() },
+    { nome: 'status', rotulo: 'Situação', tipo: 'select', vazio: false, opcoes: [['previsto', 'A receber'], ['pago', 'Recebido']], largura: 'meia' },
+    { nome: 'pago_em', rotulo: 'Recebido em', tipo: 'date', largura: 'meia' },
+    { nome: 'forma', rotulo: 'Forma de pagamento', tipo: 'select', opcoes: ['PIX', 'Transferência', 'Boleto', 'Cartão', 'Dinheiro', 'Cheque'].map(o => [o, o]), largura: 'meia' },
+    { nome: 'obs', rotulo: 'Observações' },
+  ];
+  const m = formModal({
+    titulo: r ? 'Receita avulsa' : 'Nova receita avulsa', campos, valores: r || { status: 'previsto' },
+    extraRodape: r ? `<button class="btn btn-leve" type="button" data-excluir>${icone('lixo', 16)} Excluir</button>` : '',
+    onSalvar: async d => {
+      if (d.status === 'pago' && !d.pago_em) d.pago_em = hoje();
+      if (d.status !== 'pago') d.pago_em = null;
+      Object.assign(d, { gatilho: 'data', etapa_id: null, projeto_id: null });
+      let reg;
+      if (r) reg = await atualizar('recebimentos', r.id, d);
+      else [reg] = await inserir('recebimentos', { ...d, ordem: 0 });
+      aviso('Receita salva'); nav.recarregar();
+      if (d.status === 'pago' && r?.status !== 'pago') setTimeout(() => abrirRecibo(reg), 200);
+    },
+  });
+  const f = m.el.querySelector('form');
+  const alternar = () => f.pago_em.closest('.campo').classList.toggle('oculto', f.status.value !== 'pago');
+  f.status.addEventListener('change', alternar); alternar();
+  m.el.querySelector('[data-excluir]')?.addEventListener('click', async () => {
+    if (!await confirmar('Excluir esta receita?', { ok: 'Excluir', perigo: true })) return;
+    await tentar(() => remover('recebimentos', r.id), 'Receita excluída'); m.fechar(); nav.recarregar();
+  });
+}
+/** Abre o formulário certo para editar um recebimento (de projeto ou avulso). */
+export const editarRecebimento = (r) => r.projeto_id ? formRecebimento(r, r.projeto_id) : formReceitaAvulsa(r);
 
 export function tagRecebimento(r) {
   const s = situacaoRecebimento(r);
