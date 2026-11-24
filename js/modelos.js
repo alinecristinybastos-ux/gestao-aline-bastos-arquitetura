@@ -272,19 +272,48 @@ const DEMOLIR_CONSTRUIR = 'Identificar paredes a demolir|Identificar paredes a c
 // ---------------------------------------------------------------------
 function clonar(e) { return JSON.parse(JSON.stringify(e)); }
 
+/** Tira a numeração do checklist original ("6.2 Plantas…" → "Plantas…"). */
+const semNumero = (grupos) => Object.fromEntries(Object.entries(grupos).map(([k, v]) => [k.replace(/^\d+(\.\d+)*\s+/, ''), v]));
+
+/**
+ * Caminho do projeto arquitetônico do escritório:
+ * Contratação → Levantamento → (Viabilidade, opcional) → Estudo preliminar e 3D →
+ * Projeto executivo (já inclui as definições do anteprojeto) →
+ * (Compatibilização, só se houver complementares) → Revisão final → Entrega →
+ * (Licenciamento na prefeitura, se contratado) → (Acompanhamento da obra, opcional)
+ */
 function arquitetonicoCompleto(tipo, intervencao) {
-  const etapas = [CONTRATACAO, ARQ_BRIEFING, ARQ_VIABILIDADE, ARQ_ESTUDO, ARQ_ANTEPROJETO,
-    ARQ_LICENCIAMENTO, ARQ_EXECUTIVO, COMPATIBILIZACAO_ARQ, REVISAO, ENTREGA, ACOMPANHAMENTO].map(clonar);
-  const brief = etapas[1], ante = etapas[4], exec = etapas[6], lic = etapas[5];
+  const contr = clonar(CONTRATACAO);
+  const brief = clonar(ARQ_BRIEFING);
+  brief.nome = 'Levantamento e briefing';
+  const viab = clonar(ARQ_VIABILIDADE);
+  const estudo = clonar(ARQ_ESTUDO);
+  // Projeto executivo direto: as definições do anteprojeto entram como primeiros grupos
+  const ante = clonar(ARQ_ANTEPROJETO);
+  const exec = clonar(ARQ_EXECUTIVO);
+  exec.dias = 40;
+  exec.entrega = 'Projeto executivo completo, com as definições de projeto, para execução da obra.';
+  exec.grupos = {
+    'Definições do projeto': ante.grupos['4.1 Desenvolvimento arquitetônico'],
+    'Integração técnica': ante.grupos['4.2 Integração técnica'],
+    ...semNumero(exec.grupos),
+  };
+  const compat = { ...clonar(COMPATIBILIZACAO_ARQ), opcional: true, soComComplementares: true };
+  const revisao = clonar(REVISAO);
+  const entrega = clonar(ENTREGA);
+  const lic = clonar(ARQ_LICENCIAMENTO);
+  lic.nome = 'Licenciamento na prefeitura';
+  lic.grupos = semNumero(lic.grupos);
+  const obra = clonar(ACOMPANHAMENTO);
+  const etapas = [contr, brief, viab, estudo, exec, compat, revisao, entrega, lic, obra];
 
   if (intervencao === 'reforma' || intervencao === 'ampliacao') {
     brief.grupos['1.5 Edificação existente'] = 'Levantamento cadastral (medição) da edificação existente|Verificar projeto aprovado e habite-se existentes|Identificar elementos estruturais existentes|Registrar patologias e condições da edificação|Verificar instalações existentes (elétrica, hidráulica, gás)|Levantamento fotográfico detalhado da edificação';
-    ante.grupos['4.4 Demolir e construir'] = 'Planta de demolir / construir preliminar|Legenda: existente, a demolir e a construir|Validar intervenções estruturais com engenheiro';
-    exec.grupos['6.10 Planta de demolição e construção'] = DEMOLIR_CONSTRUIR;
+    exec.grupos['Planta de demolição e construção'] = 'Legenda: existente, a demolir e a construir|Validar intervenções estruturais com engenheiro|' + DEMOLIR_CONSTRUIR;
   }
   if (intervencao === 'ampliacao') {
     brief.grupos['1.5 Edificação existente'] += '|Verificar regularidade da área existente|Conferir potencial construtivo remanescente para ampliação';
-    lic.grupos['5.1 Conferências'] += '|Quadro de áreas: existente + a ampliar + total';
+    lic.grupos['Conferências'] += '|Quadro de áreas: existente + a ampliar + total';
   }
   if (tipo === 'comercial') {
     brief.grupos['1.6 Requisitos comerciais'] = 'Definir atividade e público do estabelecimento|Levantar identidade visual da marca|Definir fluxo de atendimento e de serviço|Verificar exigências da Vigilância Sanitária, se aplicável|Verificar acessibilidade (NBR 9050)|Verificar exigências para alvará de funcionamento';

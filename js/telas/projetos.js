@@ -1,12 +1,12 @@
 // =====================================================================
 //  PROJETOS — quadro por fase (estilo Trello), lista e novo projeto
 // =====================================================================
-import { store, atualizar } from '../dados.js?v=202611241851';
-import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611241851';
-import { nav } from '../nav.js?v=202611241851';
-import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611241851';
-import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas, saudeProjeto, NOMES_SAUDE } from '../negocio.js?v=202611241851';
-import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611241851';
+import { store, atualizar } from '../dados.js?v=202611241854';
+import { h, icone, moeda, data, hoje, somarDias, abrirModal, aviso, campoHTML } from '../util.js?v=202611241854';
+import { nav } from '../nav.js?v=202611241854';
+import { CATEGORIAS, TIPOS, INTERVENCOES, TIPOS_COM_INTERVENCAO, FASES, montarModelo, pagamentosPadrao, intervencoesDa, infoServico } from '../modelos.js?v=202611241854';
+import { nomeCliente, descricaoTipo, faseAtual, progressoProjeto, colunaDoQuadro, criarProjeto, etapasDo, aguardandoParceiros, pendenciasAbertas, saudeProjeto, NOMES_SAUDE } from '../negocio.js?v=202611241854';
+import { formCliente, opcoesClientes, tagPrazo, chipsComplementares, registrarComplementares, chipsServicos, registrarServicos } from '../componentes.js?v=202611241854';
 
 const STATUS_PROJ = { ativo: 'Em andamento', pausado: 'Pausado', concluido: 'Concluído', cancelado: 'Cancelado' };
 export { STATUS_PROJ };
@@ -165,7 +165,8 @@ export function novoProjeto(pre = {}) {
   function gerarEtapas() {
     const modelo = montarModelo(st.categoria, st.tipo, precisaIntervencao() ? st.intervencao : null);
     const pelosServicos = st.servicos.map(n => infoServico(n).etapa).filter(Boolean);
-    st.etapas = modelo.map(e => ({ ...e, incluir: !e.opcional || pelosServicos.includes(e.chave), prazo: '', data_inicio: '' }));
+    st.etapas = modelo.map(e => ({ ...e, prazo: '', data_inicio: '',
+      incluir: e.soComComplementares ? st.complementares.length > 0 : (!e.opcional || pelosServicos.includes(e.chave)) }));
     recalcularDatas();
     st.pagamentos = null;
   }
@@ -301,7 +302,10 @@ export function novoProjeto(pre = {}) {
         desenhar();
       }));
       corpo.querySelectorAll('[data-comp-ctr]').forEach(b => b.addEventListener('click', () => {
-        const d = b.dataset.compCtr; st.complementares = st.complementares.includes(d) ? st.complementares.filter(x => x !== d) : [...st.complementares, d]; desenhar();
+        const d = b.dataset.compCtr; st.complementares = st.complementares.includes(d) ? st.complementares.filter(x => x !== d) : [...st.complementares, d];
+        // compatibilização entra quando há complementares contratados
+        if (st.etapas) { st.etapas.forEach(e => { if (e.soComComplementares) e.incluir = st.complementares.length > 0; }); recalcularDatas(); st.pagamentos = null; }
+        desenhar();
       }));
     }
     if (st.passo === 3) {

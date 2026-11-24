@@ -2,12 +2,12 @@
 //  FINANCEIRO — resumo do mês (receitas, despesas e resultado),
 //  a receber, recebidos, parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611241851';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611241851';
-import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611241851';
-import { nav } from '../nav.js?v=202611241851';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro, origemRecebimento, clienteDoRecebimento } from '../negocio.js?v=202611241851';
-import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa, formReceitaAvulsa, editarRecebimento } from '../componentes.js?v=202611241851';
+import { store, porId, atualizar } from '../dados.js?v=202611241854';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611241854';
+import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611241854';
+import { nav } from '../nav.js?v=202611241854';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro, origemRecebimento, clienteDoRecebimento } from '../negocio.js?v=202611241854';
+import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa, formReceitaAvulsa, editarRecebimento } from '../componentes.js?v=202611241854';
 
 let aba = 'mes';
 let mesSel = hoje().slice(0, 7);
