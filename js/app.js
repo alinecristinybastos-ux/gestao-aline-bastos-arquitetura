@@ -1,23 +1,23 @@
 // =====================================================================
 //  Aplicativo: login, menu lateral e rotas
 // =====================================================================
-import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611241859';
-import { icone, h, aviso, diasAte } from './util.js?v=202611241859';
-import { nav } from './nav.js?v=202611241859';
-import { situacaoRecebimento } from './negocio.js?v=202611241859';
-import { VERSAO, DATA_VERSAO } from './versao.js?v=202611241859';
-import { abrirBackup, diasSemBackup } from './backup.js?v=202611241859';
-import { criarDadosExemplo } from './exemplo.js?v=202611241859';
+import { iniciar, carregarTudo, entrar, sair, modoDemo, demoVazio, zerarDemo, store, tabelasFaltando } from './dados.js?v=202611241902';
+import { icone, h, aviso, diasAte } from './util.js?v=202611241902';
+import { nav } from './nav.js?v=202611241902';
+import { situacaoRecebimento } from './negocio.js?v=202611241902';
+import { VERSAO, DATA_VERSAO } from './versao.js?v=202611241902';
+import { abrirBackup, diasSemBackup } from './backup.js?v=202611241902';
+import { criarDadosExemplo } from './exemplo.js?v=202611241902';
 
-import * as programacao from './telas/programacao.js?v=202611241859';
-import * as painel from './telas/painel.js?v=202611241859';
-import * as projetos from './telas/projetos.js?v=202611241859';
-import * as projeto from './telas/projeto.js?v=202611241859';
-import * as clientes from './telas/clientes.js?v=202611241859';
-import * as financeiro from './telas/financeiro.js?v=202611241859';
-import * as orcamentos from './telas/orcamentos.js?v=202611241859';
-import * as tarefas from './telas/tarefas.js?v=202611241859';
-import * as parceiros from './telas/parceiros.js?v=202611241859';
+import * as programacao from './telas/programacao.js?v=202611241902';
+import * as painel from './telas/painel.js?v=202611241902';
+import * as projetos from './telas/projetos.js?v=202611241902';
+import * as projeto from './telas/projeto.js?v=202611241902';
+import * as clientes from './telas/clientes.js?v=202611241902';
+import * as financeiro from './telas/financeiro.js?v=202611241902';
+import * as orcamentos from './telas/orcamentos.js?v=202611241902';
+import * as tarefas from './telas/tarefas.js?v=202611241902';
+import * as parceiros from './telas/parceiros.js?v=202611241902';
 
 const MENU = [
   ['painel', 'Painel', 'painel'],
@@ -76,16 +76,17 @@ function montarCasca(usuario) {
 
 function atualizarContadores() {
   const atrasadas = store.tarefas.filter(t => t.status !== 'feito' && t.prazo && diasAte(t.prazo) < 0).length;
-  const cobrar = store.recebimentos.filter(r => ['liberado', 'atrasado'].includes(situacaoRecebimento(r).cod)).length
-    + store.despesas.filter(d => !d.pago && d.vencimento && diasAte(d.vencimento) < 0).length;
-  const marcar = (rota, n) => {
+  const nCobrar = store.recebimentos.filter(r => ['liberado', 'atrasado'].includes(situacaoRecebimento(r).cod)).length;
+  const nDespVenc = store.despesas.filter(d => !d.pago && d.vencimento && diasAte(d.vencimento) < 0).length;
+  const cobrar = nCobrar + nDespVenc;
+  const marcar = (rota, n, dica = '') => {
     const el = document.querySelector(`[data-cont="${rota}"]`);
     if (!el) return;
-    el.textContent = n; el.classList.toggle('oculto', !n);
+    el.textContent = n; el.classList.toggle('oculto', !n); el.title = dica;
   };
   marcar('tarefas', atrasadas);
   marcar('projetos', store.pendencias.filter(x => x.status !== 'resolvida' && x.prazo && diasAte(x.prazo) <= 0).length);
-  marcar('financeiro', cobrar);
+  marcar('financeiro', cobrar, [nCobrar && `${nCobrar} para cobrar`, nDespVenc && `${nDespVenc} despesa${nDespVenc > 1 ? 's' : ''} vencida${nDespVenc > 1 ? 's' : ''} sem pagar`].filter(Boolean).join(' · '));
 }
 
 function rotaAtual() {
