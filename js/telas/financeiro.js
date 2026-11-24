@@ -2,12 +2,12 @@
 //  FINANCEIRO — resumo do mês (receitas, despesas e resultado),
 //  a receber, recebidos, parceiros e visão do ano
 // =====================================================================
-import { store, porId, atualizar } from '../dados.js?v=202611241903';
-import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611241903';
-import { botaoRecibo, ligarRecibos, formConfigRecibo } from '../recibo.js?v=202611241903';
-import { nav } from '../nav.js?v=202611241903';
-import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro, origemRecebimento, clienteDoRecebimento } from '../negocio.js?v=202611241903';
-import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa, formReceitaAvulsa, editarRecebimento } from '../componentes.js?v=202611241903';
+import { store, porId, atualizar } from '../dados.js?v=202611241910';
+import { h, icone, moeda, data, hoje, tentar, aviso } from '../util.js?v=202611241910';
+import { botaoRecibo, ligarRecibos, formConfigRecibo, abrirReciboSalario, ehDespesaEquipe } from '../recibo.js?v=202611241910';
+import { nav } from '../nav.js?v=202611241910';
+import { nomeCliente, situacaoRecebimento, dataReferencia, nomeParceiro, contaParceiro, origemRecebimento, clienteDoRecebimento } from '../negocio.js?v=202611241910';
+import { tagRecebimento, marcarRecebido, formRecebimento, formPagamentoParceiro, extratoPagamentos, ligarExtrato, formDespesa, formReceitaAvulsa, editarRecebimento } from '../componentes.js?v=202611241910';
 
 let aba = 'mes';
 let mesSel = hoje().slice(0, 7);
@@ -119,7 +119,8 @@ function tabMes(area, recs) {
               <div class="linha-sit">${d.pago ? `<span class="tag tag-ok">Paga</span> <span class="fraco">${data(d.pago_em)}</span>`
               : `<span class="tag ${d.vencimento < hoje() ? 'tag-atrasado' : 'tag-alerta'}">${d.vencimento < hoje() ? 'Vencida' : 'A pagar'}</span> <span class="fraco">vence ${data(d.vencimento)}</span>`}</div></td>
             <td class="num">${moeda(d.valor)}</td>
-            <td class="num">${!d.pago ? `<button class="btn-icone" data-pagar-desp="${d.id}" title="Marcar como paga">${icone('check', 16)}</button>` : ''}</td></tr>`).join('')}
+            <td class="num">${!d.pago ? `<button class="btn-icone" data-pagar-desp="${d.id}" title="Marcar como paga">${icone('check', 16)}</button>`
+              : ehDespesaEquipe(d) ? `<button class="btn-icone" data-recibo-sal="${d.id}" title="Recibo de pagamento para assinar">${icone('pdf', 15)}</button>` : ''}</td></tr>`).join('')}
           ${pagParc.map(x => `<tr><td><div>${h(nomeParceiro(x.parceiro_id))}</div><div class="fraco">Parceiros (complementares)${x.obs ? ' · ' + h(x.obs) : ''}</div>
             <div class="linha-sit"><span class="tag tag-ok">Pago</span> <span class="fraco">${data(x.data)}</span></div></td><td class="num">${moeda(x.valor)}</td><td></td></tr>`).join('')}
           </tbody></table></div>` : '<div class="vazio">Nenhuma despesa lançada neste mês.</div>'}
@@ -136,11 +137,16 @@ function tabMes(area, recs) {
   area.querySelector('[data-nova-rec]').addEventListener('click', () => formReceitaAvulsa());
   area.querySelector('[data-nova-desp]').addEventListener('click', () => formDespesa(null, { vencimento: mesSel === hoje().slice(0, 7) ? hoje() : mesSel + '-10' }));
   area.querySelectorAll('[data-desp]').forEach(tr => tr.addEventListener('click', e => {
-    if (e.target.closest('[data-pagar-desp]')) return;
+    if (e.target.closest('[data-pagar-desp], [data-recibo-sal]')) return;
     formDespesa(porId('despesas', tr.dataset.desp));
   }));
   area.querySelectorAll('[data-pagar-desp]').forEach(b => b.addEventListener('click', async () => {
-    await tentar(() => atualizar('despesas', b.dataset.pagarDesp, { pago: true, pago_em: hoje() }), 'Despesa paga'); nav.recarregar();
+    const d = porId('despesas', b.dataset.pagarDesp);
+    await tentar(() => atualizar('despesas', d.id, { pago: true, pago_em: hoje() }), 'Despesa paga'); nav.recarregar();
+    if (ehDespesaEquipe(d)) setTimeout(() => abrirReciboSalario(d), 200);
+  }));
+  area.querySelectorAll('[data-recibo-sal]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation(); abrirReciboSalario(porId('despesas', b.dataset.reciboSal));
   }));
   ligarRec(area);
 }

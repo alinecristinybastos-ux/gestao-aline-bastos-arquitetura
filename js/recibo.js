@@ -5,9 +5,9 @@
 //  Os dados pessoais (nome, CAU, CPF, PIX) ficam no banco (tabela
 //  config), e não no código, porque o site é público.
 // =====================================================================
-import { store, porId, inserir, atualizar } from './dados.js?v=202611241903';
-import { h, moeda, hoje, formModal, aviso, icone } from './util.js?v=202611241903';
-import { CATEGORIAS } from './modelos.js?v=202611241903';
+import { store, porId, inserir, atualizar } from './dados.js?v=202611241910';
+import { h, moeda, hoje, formModal, aviso, icone } from './util.js?v=202611241910';
+import { CATEGORIAS } from './modelos.js?v=202611241910';
 
 // ---------------------------------------------------------------- dados do escritório
 export const configEscritorio = () => store.config.find(c => c.id === 'escritorio')?.dados || null;
@@ -207,15 +207,16 @@ export async function gerarPdf(d) {
   doc.text(`${d.cidade || cfg.cidade || ''}, ${dataExtenso(d.data || hoje())}.`, 112.4, yData, { align: 'center', baseline: 'top' });
 
   const yAss = yData + 41.8;
-  [cfg.nome, cfg.registro, cfg.cpf && (/^\s*(cpf|cnpj)/i.test(cfg.cpf) ? cfg.cpf : `CPF: ${cfg.cpf}`)].filter(Boolean)
-    .forEach((t, i) => doc.text(t, 109.3, yAss + i * 6, { align: 'center', baseline: 'top' }));
+  const assinatura = d.assinatura || [cfg.nome, cfg.registro, cfg.cpf && (/^\s*(cpf|cnpj)/i.test(cfg.cpf) ? cfg.cpf : `CPF: ${cfg.cpf}`)];
+  if (d.linhaAssinatura) { doc.setDrawColor(...VERDE); doc.setLineWidth(0.3); doc.line(62, yAss - 3, 156, yAss - 3); }
+  assinatura.filter(Boolean).forEach((t, i) => doc.text(t, 109.3, yAss + i * 6, { align: 'center', baseline: 'top' }));
 
   if (d.pix && cfg.pix) {
     doc.setFontSize(12); doc.setTextColor(255, 0, 0);
     ['PIX PARA PAGAMENTO:', ...String(cfg.pix).split('\n').map(s => s.trim()).filter(Boolean)]
       .forEach((t, i) => doc.text(t, 25.3, 245.5 + i * 5.15, { baseline: 'top' }));
   }
-  const nomeArq = `Recibo - ${d.recebido_de} - ${d.data || hoje()}.pdf`.replace(/[\\/:*?"<>|]/g, '');
+  const nomeArq = d.nomeArquivo || `Recibo - ${d.recebido_de} - ${d.data || hoje()}.pdf`.replace(/[\\/:*?"<>|]/g, '');
   doc.save(nomeArq);
 }
 
@@ -225,4 +226,75 @@ export function ligarRecibos(raiz) {
   raiz.querySelectorAll('[data-recibo]').forEach(b => b.addEventListener('click', e => {
     e.stopPropagation(); abrirRecibo(porId('recebimentos', b.dataset.recibo));
   }));
+}
+
+// =====================================================================
+//  RECIBO DE PAGAMENTO DE SALÁRIO (quem assina é a pessoa que recebe)
+// =====================================================================
+const dadosEquipe = () => store.config.find(c => c.id === 'equipe')?.dados || {};
+const dataCurta = (iso) => { const [a, m, d] = iso.split('-'); return `${d}/${m}/${a}`; };
+
+/** Quem recebe: procura o nome da pessoa da equipe na descrição ("Quinzena Julia" → Julia). */
+function chavePessoa(desp) {
+  const salvos = Object.keys(dadosEquipe());
+  const txt = String(desp.descricao || '').toLowerCase();
+  return salvos.find(k => txt.includes(k.toLowerCase()))
+    || ['Julia'].find(k => txt.includes(k.toLowerCase()))
+    || String(desp.descricao || '').replace(/^(quinzena|sal[aá]rio|adiantamento|pagamento)\s+(d[aeo]\s+)?/i, '').trim().split(/\s+/)[0] || '';
+}
+
+function referenteSalario(desp) {
+  const venc = desp.vencimento || desp.pago_em || hoje();
+  if (/quinzena/i.test(desp.descricao || '')) {
+    return `ao pagamento da quinzena de ${dataCurta(somarDiasIso(venc, -14))} a ${dataCurta(venc)}, pelos serviços prestados ao escritório Aline Bastos Arquitetura`;
+  }
+  const [a, m] = venc.split('-').map(Number);
+  return `ao pagamento referente ao mês de ${MESES[m - 1]} de ${a}, pelos serviços prestados ao escritório Aline Bastos Arquitetura`;
+}
+function somarDiasIso(iso, n) {
+  const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+export const ehDespesaEquipe = (d) => /^equipe/i.test(d?.categoria || '');
+
+export function abrirReciboSalario(desp) {
+  if (!configEscritorio()) {
+    aviso('Antes do primeiro recibo, preencha os seus dados (quem paga).');
+    return formConfigRecibo(() => abrirReciboSalario(desp));
+  }
+  const cfg = configEscritorio();
+  const chave = chavePessoa(desp);
+  const pessoa = dadosEquipe()[chave] || {};
+  const m = formModal({
+    titulo: 'Recibo de pagamento (para assinar)', largura: 620, botao: 'Gerar PDF',
+    campos: [
+      { nome: 'nome', rotulo: 'Quem recebe (nome completo)', obrigatorio: true, largura: 'meia', placeholder: 'Ex.: Julia ...' },
+      { nome: 'cpf', rotulo: 'CPF de quem recebe', largura: 'meia' },
+      { nome: 'funcao', rotulo: 'Função (aparece abaixo da assinatura)', largura: 'meia', placeholder: 'Ex.: Designer de interiores' },
+      { nome: 'valor', rotulo: 'Valor', tipo: 'moeda', obrigatorio: true, largura: 'meia' },
+      { nome: 'referente', rotulo: 'Referente', tipo: 'textarea', linhas: 3 },
+      { nome: 'cidade', rotulo: 'Cidade', largura: 'meia' },
+      { nome: 'data', rotulo: 'Data', tipo: 'date', largura: 'meia' },
+    ],
+    valores: {
+      nome: pessoa.nome || chave, cpf: pessoa.cpf || '', funcao: pessoa.funcao || '',
+      valor: desp.valor, referente: referenteSalario(desp), cidade: cfg.cidade, data: desp.pago_em || hoje(),
+    },
+    onSalvar: async d => {
+      // guarda nome/CPF/função para os próximos recibos
+      const equipe = { ...dadosEquipe(), [chave || d.nome.split(' ')[0]]: { nome: d.nome, cpf: d.cpf, funcao: d.funcao } };
+      if (store.config.find(x => x.id === 'equipe')) await atualizar('config', 'equipe', { dados: equipe });
+      else await inserir('config', { id: 'equipe', dados: equipe });
+      await gerarPdf({
+        recebido_de: cfg.nome, documento: cfg.cpf ? String(cfg.cpf).replace(/^\s*(cpf|cnpj):?\s*/i, '') : '',
+        valor: d.valor, referente: d.referente, cidade: d.cidade, data: d.data, pix: false,
+        linhaAssinatura: true,
+        assinatura: [d.nome, d.funcao, d.cpf && `CPF: ${String(d.cpf).replace(/^\s*cpf:?\s*/i, '')}`],
+        nomeArquivo: `Recibo pagamento - ${d.nome} - ${d.data}.pdf`.replace(/[\\/:*?"<>|]/g, ''),
+      });
+      aviso('Recibo gerado — imprima para assinatura');
+    },
+  });
+  void m;
 }

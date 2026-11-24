@@ -5,12 +5,12 @@
 //  ir para vários dias. Reuniões podem ser marcadas em cada dia.
 //  Cada dia programado é um registro em "tarefas" com tipo 'projeto'.
 // =====================================================================
-import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611241903';
-import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611241903';
-import { nav } from '../nav.js?v=202611241903';
-import { EQUIPE } from '../config.js?v=202611241903';
-import { formTarefa } from '../componentes.js?v=202611241903';
-import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas, aguardandoParceiros } from '../negocio.js?v=202611241903';
+import { store, porId, atualizar, inserir, remover } from '../dados.js?v=202611241910';
+import { h, icone, hoje, somarDias, tentar, abrirModal, aviso } from '../util.js?v=202611241910';
+import { nav } from '../nav.js?v=202611241910';
+import { EQUIPE } from '../config.js?v=202611241910';
+import { formTarefa } from '../componentes.js?v=202611241910';
+import { faseAtual, saudeProjeto, nomeCliente, pendenciasAbertas, aguardandoParceiros } from '../negocio.js?v=202611241910';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];

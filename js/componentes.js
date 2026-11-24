@@ -1,13 +1,13 @@
 // =====================================================================
 //  Componentes compartilhados entre telas: formulários e anexos
 // =====================================================================
-import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611241903';
-import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611241903';
-import { EQUIPE } from './config.js?v=202611241903';
-import { abrirRecibo } from './recibo.js?v=202611241903';
-import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611241903';
-import { nav } from './nav.js?v=202611241903';
-import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611241903';
+import { store, inserir, atualizar, remover, porId, enviarArquivo, urlArquivo, apagarArquivo, uid } from './dados.js?v=202611241910';
+import { h, icone, formModal, abrirModal, confirmar, aviso, tentar, data, tamanhoArquivo, moeda, prazoTexto, hoje, somarDias } from './util.js?v=202611241910';
+import { EQUIPE } from './config.js?v=202611241910';
+import { abrirRecibo, abrirReciboSalario, ehDespesaEquipe } from './recibo.js?v=202611241910';
+import { opcoesDisciplina, COMPLEMENTARES_PRINCIPAIS, DISCIPLINAS, SERVICOS_ADICIONAIS, infoServico } from './modelos.js?v=202611241910';
+import { nav } from './nav.js?v=202611241910';
+import { STATUS_COMPL, complAtrasado, nomeParceiro, situacaoRecebimento, etapasDo, contaParceiro, pagamentoCompl, TIPOS_PENDENCIA, pendenciasAbertas, faseAtual } from './negocio.js?v=202611241910';
 
 export const opcoesEquipe = () => EQUIPE.map(n => [n, n]);
 export const opcoesClientes = () => [...store.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).map(c => [c.id, c.nome]);
@@ -488,6 +488,7 @@ export function formDespesa(desp = null, padrao = {}) {
         await inserir('despesas', datas.map((venc, i) => ({ ...d, vencimento: venc, grupo, pago: i === 0 ? d.pago : false, pago_em: i === 0 ? d.pago_em : null })));
       } else await inserir('despesas', d);
       aviso(repetir && repetir !== 'nao' ? `Despesa lançada: ${REPETICOES[repetir].aviso}` : 'Despesa salva'); nav.recarregar();
+      if (d.pago && !desp?.pago && ehDespesaEquipe(d)) setTimeout(() => abrirReciboSalario({ ...d, ...(desp || {}), ...d }), 200);
     },
   });
   const f = m.el.querySelector('form');
