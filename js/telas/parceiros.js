@@ -3,14 +3,14 @@
 //  Conta corrente: o que cada parceiro cobrou nos complementares,
 //  menos os pagamentos lançados (independentes de projeto).
 // =====================================================================
-import { store, porId, remover } from '../dados.js?v=202611241914';
-import { h, icone, moeda, confirmar, tentar } from '../util.js?v=202611241914';
-import { nav } from '../nav.js?v=202611241914';
-import { complAtrasado, contaParceiro, pagamentoCompl } from '../negocio.js?v=202611241914';
+import { store, porId, remover } from '../dados.js?v=202611251035';
+import { h, icone, moeda, confirmar, tentar } from '../util.js?v=202611251035';
+import { nav } from '../nav.js?v=202611251035';
+import { complAtrasado, contaParceiro, pagamentoCompl } from '../negocio.js?v=202611251035';
 import {
   formParceiro, formComplementar, linhaComplementar, ligarLinhasComplementares, iniciais,
   formPagamentoParceiro, extratoPagamentos, ligarExtrato,
-} from '../componentes.js?v=202611241914';
+} from '../componentes.js?v=202611251035';
 
 let filtroSit = 'abertos';
 

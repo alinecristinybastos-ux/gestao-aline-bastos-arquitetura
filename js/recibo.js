@@ -5,9 +5,9 @@
 //  Os dados pessoais (nome, CAU, CPF, PIX) ficam no banco (tabela
 //  config), e não no código, porque o site é público.
 // =====================================================================
-import { store, porId, inserir, atualizar } from './dados.js?v=202611241914';
-import { h, moeda, hoje, formModal, aviso, icone } from './util.js?v=202611241914';
-import { CATEGORIAS } from './modelos.js?v=202611241914';
+import { store, porId, inserir, atualizar } from './dados.js?v=202611251035';
+import { h, moeda, hoje, formModal, aviso, icone } from './util.js?v=202611251035';
+import { CATEGORIAS } from './modelos.js?v=202611251035';
 
 // ---------------------------------------------------------------- dados do escritório
 export const configEscritorio = () => store.config.find(c => c.id === 'escritorio')?.dados || null;
@@ -245,7 +245,15 @@ function chavePessoa(desp) {
 
 function referenteSalario(desp) {
   const venc = desp.vencimento || desp.pago_em || hoje();
-  if (/quinzena/i.test(desp.descricao || '')) {
+  const desc = String(desp.descricao || '');
+  const ano = venc.slice(0, 4);
+  if (/13|d[eé]cimo\s*terceiro/i.test(desc)) {
+    const parcela = /(1[ªaº]?|primeira)\s*parcela/i.test(desc) ? 'da 1ª parcela do 13º salário'
+      : /(2[ªaº]?|segunda)\s*parcela/i.test(desc) ? 'da 2ª parcela do 13º salário' : 'do 13º salário';
+    return `ao pagamento ${parcela} referente ao ano de ${ano}`;
+  }
+  if (/f[eé]rias/i.test(desc)) return `ao pagamento de férias referente ao ano de ${ano}`;
+  if (/quinzena/i.test(desc)) {
     return `ao pagamento da quinzena de ${dataCurta(somarDiasIso(venc, -14))} a ${dataCurta(venc)}, pelos serviços prestados ao escritório Aline Bastos Arquitetura`;
   }
   const [a, m] = venc.split('-').map(Number);
